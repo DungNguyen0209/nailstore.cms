@@ -1,0 +1,14 @@
+/* Custom styles for the login page */
+
+/* Left side background image styling */
+.login-left {
+    background-image: url('/path/to/your/image.jpg'); /* Replace with actual image path */
+  }
+  
+  /* Responsive typography */
+  @media (min-width: 1024px) {
+    .login-left h1 {
+      font-size: 6rem;
+    }
+  }
+  
