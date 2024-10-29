@@ -1,0 +1,16 @@
+{
+    "extends": [
+      "@antfu"
+    ],
+    "rules": {
+    "spaced-comment": ["error", "never"],
+      "import/first": 0,
+      "import/order": 0,
+      "import/no-duplicates": 0,
+      "vue/no-deprecated-v-bind-sync": 0,
+      "vue/no-deprecated-slot-scope-attribute": 0,
+      "no-undef": 0,
+      "no-use-before-define": "off"
+    }
+  }
+  
