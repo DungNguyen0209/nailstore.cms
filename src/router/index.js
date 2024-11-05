@@ -1,23 +1,132 @@
 import { createRouter, createWebHistory } from 'vue-router'
+import Home from '@/views/HomeView.vue'
+import { useAuthStore } from '@/stores/auth.js';
+import Style from '@/views/StyleView.vue'
 
 const routes = [
   {
-    name: 'dashboard-home',
+    meta: {
+      title: 'Select style'
+    },
+    path: '/style',
+    name: 'style',
+    component: Style
+  },
+  {
+    // Document title tag
+    // We combine it with defaultDocumentTitle set in `src/main.js` on router.afterEach hook
+    meta: {
+      title: 'Dashboard'
+    },
     path: '/',
-    component: () => import('../layout/Master.vue'),
-    redirect: '/dashboard',
-    children: [{
-      name: 'dashboard',
-      path: '/dashboard',
-      component: () => import('../components/Dashboard.vue'),
-
-    }
-    ]
+    name: 'dashboard',
+    component: Home,
+    meta: { requiresAuth: true }
+  },
+  {
+    meta: {
+      title: 'Checkin'
+    },
+    path: '/checkin-customer',
+    name: 'checkin',
+    component: () => import('@/views/CheckinCustomer.vue')
+  },
+  {
+    meta: {
+      title: 'CheckinInfo'
+    },
+    path: '/checkin-customer-info',
+    name: 'checkinInfo',
+    component: () => import('@//views/CheckinCustomerInfo.vue')
+  },
+  {
+    meta: {
+      title: 'Services'
+    },
+    path: '/services',
+    name: 'services',
+    component: () => import('@/views/ServiceView.vue')
+  },
+  {
+    meta: {
+      title: 'Tables'
+    },
+    path: '/tables',
+    name: 'tables',
+    component: () => import('@/views/TablesView.vue')
+  },
+  {
+    meta: {
+      title: 'Forms'
+    },
+    path: '/forms',
+    name: 'forms',
+    component: () => import('@/views/FormsView.vue')
+  },
+  {
+    meta: {
+      title: 'Profile'
+    },
+    path: '/profile',
+    name: 'profile',
+    component: () => import('@/views/ProfileView.vue')
+  },
+  {
+    meta: {
+      title: 'Ui'
+    },
+    path: '/ui',
+    name: 'ui',
+    component: () => import('@/views/UiView.vue')
+  },
+  {
+    meta: {
+      title: 'Responsive layout'
+    },
+    path: '/responsive',
+    name: 'responsive',
+    component: () => import('@/views/ResponsiveView.vue')
+  },
+  {
+    meta: {
+      title: 'Login'
+    },
+    path: '/login',
+    name: 'login',
+    component: () => import('@/views/LoginView.vue')
+  },
+  {
+    meta: {
+      title: 'Error'
+    },
+    path: '/error',
+    name: 'error',
+    component: () => import('@/views/ErrorView.vue')
   }
 ]
 
 const router = createRouter({
   history: createWebHistory(),
-  routes
+  routes,
+  scrollBehavior(to, from, savedPosition) {
+    return savedPosition || { top: 0 }
+  }
+})
+
+router.beforeEach(async (to, from) => {
+  const authStore = useAuthStore();
+  if (to.meta.requiresAuth && !authStore.isTokenValid()) {
+    // this route requires auth, check if logged in
+    // if not, redirect to login page.
+    if(authStore.isRefreshTokenValid() && await authStore.getRefreshToken()){
+        return true;
+    }
+    return {
+      path: '/login',
+      // save the location we were at to come back later
+      query: { redirect: to.fullPath },
+    }
+  }
 });
-export default router;
+
+export default router
