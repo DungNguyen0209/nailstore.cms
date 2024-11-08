@@ -1,9 +1,10 @@
 <script setup>
 import { RouterView } from 'vue-router'
-import { Toast } from 'primevue';
+import { Toast, ConfirmDialog } from 'primevue';
 </script>
 
 <template>
-  <Toast />
+  <Toast group="Sccommon" />
+  <ConfirmDialog></ConfirmDialog>
   <RouterView />
 </template>

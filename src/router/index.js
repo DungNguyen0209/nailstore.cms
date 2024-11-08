@@ -41,11 +41,30 @@ const routes = [
   },
   {
     meta: {
+      title: 'CheckinSucess'
+    },
+    path: '/checkin-customer-sucess',
+    name: 'CheckinSucess',
+    component: () => import('@//views/CheckInSuccess.vue'),
+    props: true
+  },
+  {
+    meta: {
       title: 'Services'
     },
     path: '/services',
     name: 'services',
-    component: () => import('@/views/ServiceView.vue')
+    component: () => import('@/views/ServiceView.vue'),
+    meta: { requiresAuth: true }
+  },
+  {
+    meta: {
+      title: 'Orders'
+    },
+    path: '/orders',
+    name: 'orders',
+    component: () => import('@/views/OrderView.vue'),
+    meta: { requiresAuth: true }
   },
   {
     meta: {

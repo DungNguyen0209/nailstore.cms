@@ -10,7 +10,8 @@ import {
   mdiTelevisionGuide,
   mdiResponsive,
   mdiPalette,
-  mdiReact
+  mdiReact,
+  mdiAccountCreditCard
 } from '@mdi/js'
 
 export default [
@@ -20,13 +21,18 @@ export default [
     label: 'Dashboard'
   },
   {
-    to: '/tables',
-    label: 'Tables',
-    icon: mdiTable
+    to: '/orders',
+    label: 'Order',
+    icon: mdiAccountCreditCard
   },
   {
     to: '/services',
     label: 'Service',
+    icon: mdiTable
+  },
+  {
+    to: '/tables',
+    label: 'Tables',
     icon: mdiTable
   },
   {

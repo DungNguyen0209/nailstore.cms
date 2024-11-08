@@ -12,13 +12,6 @@ const props = defineProps({
   numPages: Number
 })
 
-onMounted(() => {
-    console.log('mounted', props.services)
-})
-
-watch(props.services, async (newQuestion, oldQuestion) => {
-  console.log('watch services', newQuestion)
-})
 const formatCurrency = (value) => {
     if(value)
         return "€" + value 

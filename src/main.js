@@ -9,7 +9,9 @@ import './css/main.css'
 import Aura from '@primevue/themes/aura';
 import { updatePreset } from '@primevue/themes'
 import ToastService from 'primevue/toastservice';
-import 'primeicons/primeicons.css'
+import ConfirmationService from 'primevue/confirmationservice';
+import Vue3Lottie from "vue3-lottie";
+import 'primeicons/primeicons.css';
 
 // Init Pinia
 const pinia = createPinia()
@@ -35,15 +37,14 @@ const changePrimaryColor = () => {
 }
 // Create Vue app
 const app = createApp(App)
-
+app.use(Vue3Lottie);
+app.use(ConfirmationService);
 app.use(PrimeVue, {
   theme: {
       preset: Aura,
   }
 })
-
 changePrimaryColor();
-
 app.use(ToastService);
 app.use(router).use(pinia).mount('#app')
 
