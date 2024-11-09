@@ -5,3 +5,7 @@ export async function geUserByPhone(Phone) {
         params: { phone: Phone }
     });
 }
+
+export async function getStaffForDropDown() {
+    return await api.get('api/accounts/getStaffForDropdown')
+  }

@@ -7,11 +7,16 @@ export function useToastMessage() {
     const showSuccessCreateService = (item) => {
         toast.add({ severity: 'success', summary: 'Success Create Service', group: 'Sccommon', life: 3000 });
     };
+
+    const showSuccessUpdateOrder = (item) => {
+        toast.add({ severity: 'success', summary: 'Success Update Order', group: 'Sccommon', life: 3000 });
+    };
+
     const showFailLogin = (item) => {
         toast.add({ severity: 'warn', summary: 'Login Fail', group: 'bc', life: 3000 });
     };
     const showErrorCommonMessage = (title, description) => {
-        toast.add({ severity: 'danger',title: title, summary: description, group: 'Sccommon', life: 3000 });
+        toast.add({ severity: 'error', summary: title, detail: description, group: 'Sccommon', life: 3000 });
     };
     const confirmCreateCheckInCustomer = (accept, reject) => {
         confirm.require({
@@ -38,6 +43,7 @@ export function useToastMessage() {
 
     return {
         showSuccessCreateService,
+        showSuccessUpdateOrder,
         showFailLogin,
         confirmCreateCheckInCustomer,
         showErrorCommonMessage

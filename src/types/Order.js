@@ -7,6 +7,7 @@ class Order {
       ownerPhone,
       ownerId,
       ownerName,
+      ownerEmail,
       status,
       createdBy,
       bill,
@@ -17,9 +18,10 @@ class Order {
       this.ownerPhone = ownerPhone;
       this.ownerId = ownerId;
       this.ownerName = ownerName;
+      this.ownerEmail = ownerEmail;
       this.status = status;
       this.createdBy = createdBy;
-      this.createdTime = new Date(createdTime);
+      this.createdTime = new Date(createdTime).toLocaleString();
       this.Bill =bill == null ? null : new Bill({
         id: bill.id,
         orderId: bill.orderId,

@@ -15,7 +15,7 @@
                 <div class="flex flex-col">
                     <div v-for="(item, index) in slotProps" :key="index">
                         <div class="flex flex-col sm:flex-row sm:items-center p-6 gap-4" :class="{ 'border-t border-surface-200 dark:border-surface-700': index !== 0 }">
-                            <Tag :value="item.status" :severity="getSeverity(item.status)"></Tag>
+                            <Tag :value="item.status" :severity="getOrderSeverity(item.status)"></Tag>
                             <div class="flex flex-col md:flex-row justify-between md:items-center flex-1 gap-6">
                                 <div class="flex flex-row md:flex-col justify-between items-start gap-2">
                                     <div>
@@ -45,7 +45,7 @@
                     <div v-for="(item, index) in slotProps.items" :key="index" class="col-span-12 sm:col-span-6 md:col-span-4 xl:col-span-4 p-2">
                         <div class="p-6 border border-surface-200 dark:border-surface-700 bg-surface-0 dark:bg-surface-900 rounded flex flex-col">
                             <div class="bg-surface-50 flex justify-center rounded h-2/5">
-                                <Tag :value="item.status" :severity="getSeverity(item.status)" class="w-full"></Tag>
+                                <Tag :value="item.status" :severity="getOrderSeverity(item.status)" class="w-full"></Tag>
                             </div>
                             <div class="pt-6">
                                 <div class="flex flex-row justify-between items-start gap-2">
@@ -55,17 +55,22 @@
                                             <i class="pi pi-phone content-center"></i>
                                             <div class="ml-2 spac text-lg mt-1">{{ item.ownerPhone }}</div>
                                         </div>
+                                        <span class="text-sm">{{ item.createdTime }}</span>
                                     </div>
                                     <div class="bg-surface-100 p-1" style="border-radius: 30px">
                                         <div class="bg-surface-0 flex items-center gap-2 justify-center py-1 px-2" style="border-radius: 30px; box-shadow: 0px 1px 2px 0px rgba(0, 0, 0, 0.04), 0px 1px 2px 0px rgba(0, 0, 0, 0.06)">
-                                            <i class="pi pi-star-fill text-yellow-500"></i>
+                                            <i v-if="item.status == OrderStatus.Open" class="pi pi-star-fill text-yellow-500"></i>
                                         </div>
                                     </div>
                                 </div>
                                 <div class="flex flex-col gap-6 mt-6">
                                     <span class="text-2xl font-semibold">{{ getPrice(item.price)}}</span>
                                     <div class="flex gap-2">
-                                        <Button icon="pi pi-shopping-cart" label="Update" :disabled="item.status === OrderStatus.Done" class="flex-auto whitespace-nowrap"></Button>
+                                        <Button icon="pi pi-shopping-cart" 
+                                            label="Update" 
+                                            :disabled="item.status === OrderStatus.Done" 
+                                            class="flex-auto whitespace-nowrap"
+                                            @click="editOrder(item)"></Button>
                                         <Button icon="pi pi-heart" outlined></Button>
                                     </div>
                                 </div>
@@ -86,7 +91,7 @@ import { defineProps } from "vue";
 import { Button, Tag, SelectButton, DataView  } from "primevue";
 import Paginator from 'primevue/paginator';
 import Order from "@/types/Order";
-
+import {getOrderSeverity} from "@/helpers/order";
 
 const props = defineProps({
     orders: {
@@ -111,7 +116,7 @@ const props = defineProps({
     }
 })
 
-const emit = defineEmits(['changePaging'])
+const emit = defineEmits(['changePaging', 'editOrder']);
 
 onMounted(() => {
     console.log("orders", props.orders)
@@ -120,22 +125,6 @@ onMounted(() => {
 const layout = ref('grid');
 const options = ref(['list', 'grid']);
 
-const getSeverity = (Orderstatus) => {
-    switch (Orderstatus) {
-        case OrderStatus.Open:
-            return 'success';
-
-        case OrderStatus.Processing:
-            return 'warn';
-
-        case OrderStatus.Payment:
-            return 'danger';
-        case OrderStatus.Done:
-            return 'info';
-        default:
-            return null;
-    }
-}
 
 const getPrice = (order) => {
     if(order != null && order.bill != null){
@@ -147,4 +136,8 @@ const getPrice = (order) => {
 const onPageChange = (event) => {
     emit('changePaging', event)
 };
+
+const editOrder = (slotProps) => {
+    emit('editOrder', slotProps)
+    }
 </script>

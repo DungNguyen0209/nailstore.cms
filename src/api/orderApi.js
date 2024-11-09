@@ -36,3 +36,20 @@ export async function getOrders({pageSize, pageNumber}) {
       pageNumber: pageNumber
     })
 }
+
+export async function getOrderDetail(id) {
+  return await api.get(`api/orders/getOrderDetail`, {
+    params: { id: id }
+});
+}
+
+export async function updateOrderInfo({order, serviceWorker}) {
+  console.log({
+    serviceWorker: serviceWorker,
+    order: order,
+  });
+  return await api.post(`api/orders/updateOrderInformation`, {
+    serviceWorker: serviceWorker,
+    order: order,
+  });
+}

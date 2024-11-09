@@ -1,24 +1,35 @@
 <script setup>
-import { mdiMonitorCellphone, mdiTableBorder, mdiTableOff, mdiGithub } from '@mdi/js'
+import { mdiMonitorCellphone, mdiTableBorder } from '@mdi/js'
 import SectionMain from '@/components/SectionMain.vue'
 import NotificationBar from '@/components/NotificationBar.vue'
 import CardBox from '@/components/CardBox.vue'
 import LayoutAuthenticated from '@/layouts/LayoutAuthenticated.vue'
-import SectionTitleLineWithButton from '@/components/SectionTitleLineWithButton.vue'
-import { onMounted, ref, defineProps } from 'vue'
+import { onMounted, ref, computed } from 'vue'
 import { useMasterDataStore } from '@/stores/masterData'
 import { useToastMessage } from '@/composables/useToast';
 import OrderTable from '@/components/Order/OrderTable.vue'
 import Order from '@/types/Order'
-import { getOrders } from '@/api/orderApi'
-const { showSuccessCreateService, showErrorCommonMessage } = useToastMessage();
+import { getOrders, getOrderDetail } from '@/api/orderApi'
+import { Sidebar, Tag, Button, DataTable, Column, Select, FloatLabel, MultiSelect, ConfirmPopup } from 'primevue'
+import {getOrderSeverity} from "@/helpers/order";
+import { getStaffForDropDown } from '@/api/userApi'
+import { getServiceForDropDown } from '@/api/serviceApi'
+import { OrderStatus } from '@/helpers/constants'
+import { updateOrderInfo } from '@/api/orderApi'
+import { useConfirm } from "primevue/useconfirm";
+
+const confirm = useConfirm();
+const { showErrorCommonMessage, showSuccessUpdateOrder } = useToastMessage();
 const masterData = useMasterDataStore()
 const orders = ref([new Order({})])
 const pageSize = ref(10)
 const currentPage = ref(1)
 const totalRecords = ref(0)
-const modalCreateActive = ref(false)
 const newOrder = ref(new Order({}))
+const visibleEdit = ref(false)
+const reflectSelectedOrder = ref(null)
+const services = ref(null)
+const staffs = ref(null)
 
 onMounted(async () => {
   refreshNewService()
@@ -33,51 +44,49 @@ onMounted(async () => {
     })
     });
 
-const props = defineProps({
-  label: {
-    type: [String, Number],
-    default: null
-  },
-})
-
 const refreshNewService = () => {
   newOrder.value = new Order({})
   newOrder.value.createdBy = masterData.userInfo?.id ?? ''
 }
 
-const categories = ref([]);
-const pageType = ref(1);
+const editOrder = async (order) => {
 
-async function OpenCreateService(params) {
-  if(pageType){
-    await getAllCategories()
-    .then((response) => {
-      console.log(response)
-      categories.value = response.data?.map(category => {
-        return {
-          name: category.label,
-          code: category.value
-        }
-      })
-      modalCreateActive.value = true;
-    }).catch((exception) => {
-      console.log("can not query categories", exception)
+  await getOrderDetail(order.id)
+  .then((resp) =>{
+    reflectSelectedOrder.value = {
+      order: resp.data?.order,
+      workerService: resp.data?.workerService?.map(x => ({
+        worker: {
+          code: x.worker.id,
+          name: x.worker.fullname
+        },
+        services: x.services.map(s => ({
+          code: s.id,
+          name: s.name
+        }))
+      })) || []
+    }
+  })
+  .catch(() => {
+      showErrorCommonMessage("Error Message", "Can not get detail order")
     })
-  }
-}
-async function createNewService() {
-  await createServiceByAdmin([{
-    Name: newService.value.name,
-    CategoryId: newService.value.type.code,
-    Price: newService.value.price,
-    Description: newService.value.description,
-    CreatedBy: newService.value.createdBy
-  }])
-    .then(() => {
-      showSuccessCreateService(newService.value);
-      refreshNewService();
-      modalCreateActive.value = false;
-    }).catch(() => {})
+
+    await getServiceForDropDown()
+    .then((resp) =>{
+      services.value = resp.data?.map(s =>({
+        code : s.value, 
+        name: s.label
+      }))
+    })
+
+    await getStaffForDropDown()
+    .then((resp) =>{
+      staffs.value = resp.data?.map(s =>({
+        code : s.value, 
+        name: s.label
+      }))
+    })
+  visibleEdit.value = true
 }
 
 async function getPagingOrders(params) {
@@ -90,30 +99,169 @@ async function getPagingOrders(params) {
       showErrorCommonMessage("Error Message", "Can not get orders")
     })
 }
+  
+const addNewWorkerService = () => {
+  reflectSelectedOrder.value.workerService.push({
+    worker: {
+      code: null,
+      name: null
+    },
+    services: []
+  })
+}
+
+const confirmDeleteProduct = (item) => {
+  const index = reflectSelectedOrder.value.workerService.indexOf(item);
+  if (index > -1) {
+    reflectSelectedOrder.value.workerService.splice(index, 1);
+  }
+};
+
+const disableEdit = computed(() => {
+  return reflectSelectedOrder.value?.order?.status === OrderStatus.Payment
+})
+
+// function updateOrderDetail(){
+//   if(reflectSelectedOrder.value.workerService.length === 0){
+//     showErrorCommonMessage("Error Message", "Plase fill the service")
+//     return;
+//   }
+//   if(reflectSelectedOrder.value.order.status === OrderStatus.Payment){
+//     showErrorCommonMessage("Error Message", "The status is wrong")
+//     return;
+//   }
+//   if(reflectSelectedOrder.value.order.status === OrderStatus.Open){
+//     showErrorCommonMessage("Error Message", "Can not update order")
+//     return;
+//   }
+// }
+
+async function saveOrderInformation() {
+  console.log(reflectSelectedOrder.value.note)
+  console.log({workerService: reflectSelectedOrder.value.workerService.map(x => ({
+      workerId: x.worker.code,
+      services: x.services.map(s => s.code)
+    }))})
+  await updateOrderInfo({
+    order: {
+      id: reflectSelectedOrder.value.order.id,
+      note: reflectSelectedOrder.value.note,
+    }},
+    {workerService: reflectSelectedOrder.value.workerService.map(x => ({
+      workerId: x.worker.code,
+      services: x.services.map(s => s.code)
+    }))
+  })
+  .then(() => {
+    showSuccessUpdateOrder( )
+    visibleEdit.value = false
+  })
+  .catch(() => {
+    showErrorCommonMessage("Error Message", "Can not update order")
+  });
+}
+
+const confirmSaveInformation = (event) => {
+    confirm.require({
+        target: event.currentTarget,
+        message: 'Are you sure you want to proceed?',
+        icon: 'pi pi-exclamation-triangle',
+        group: 'saveOrderDetail',
+        rejectProps: {
+            label: 'Cancel',
+            severity: 'secondary',
+            outlined: true
+        },
+        acceptProps: {
+            label: 'Save'
+        },
+        accept: async () => {
+          await saveOrderInformation()
+        },
+        reject: () => {
+        }
+    });
+};
 </script>
 
 <template>
   <LayoutAuthenticated>
-    <SectionMain>
-      <SectionTitleLineWithButton :icon="mdiTableBorder" title="Orders" main>
-      </SectionTitleLineWithButton>
-      <NotificationBar color="info" :icon="mdiMonitorCellphone">
-        <b>Responsive table.</b> Collapses on mobile
-      </NotificationBar>
-
+    <SectionMain>     
       <CardBox class="mb-6" has-table>
-        <OrderTable :orders="orders" :page-numer="pageSize" :page-size="pageSize" :total-records="totalRecords" @change-paging="getPagingOrders"/>
+        <OrderTable :orders="orders" :page-numer="pageSize" :page-size="pageSize" :total-records="totalRecords" @change-paging="getPagingOrders" @edit-order="(order) => editOrder(order)" />
       </CardBox>
-
-      <!-- <SectionTitleLineWithButton :icon="mdiTableOff" title="Empty variation" /> -->
-
-      <!-- <NotificationBar color="danger" :icon="mdiTableOff">
-        <b>Empty table.</b> When there's nothing to show
-      </NotificationBar>
-
-      <CardBox>
-        <CardBoxComponentEmpty />
-      </CardBox> -->
+      <Sidebar v-model:visible="visibleEdit" header="Detail Order" position="top" style="height: 100%;">
+        <div class="gap-4">
+          <div class="mb-4">
+              <span class="text-lg font-semibold">Họ và tên:</span>
+              <span class="ml-2 text-gray-800">{{ reflectSelectedOrder.order.ownerName }}</span>
+            </div>
+            <div class="mb-4">
+              <span class="text-lg font-semibold">Số điện thoại:</span>
+              <span class="ml-2 text-gray-800">{{ reflectSelectedOrder.order.ownerPhone }}</span>
+            </div>
+            <div class="mb-4">
+              <span class="text-lg font-semibold">E-Mail:</span>
+              <span class="ml-2 text-gray-800">{{ reflectSelectedOrder.order.ownerEmail }}</span>
+            </div>
+            <div class="flex items-center mb-4">
+              <span class="text-lg font-semibold">Trạng thái:</span>
+              <Tag :severity="getOrderSeverity(reflectSelectedOrder.order.status)" :value="reflectSelectedOrder.order.status" class="ml-2 text-white py-1 px-3 rounded-full" />
+            </div>
+            <div class="flex flex-col mb-4">
+                <label  class="text-lg font-semibold dark:text-white w-24">Note</label>
+                <Textarea :disabled="disableEdit" v-model="reflectSelectedOrder.note" class="flex-auto h-20 dark:bg-slate-800 rounded-md" rows="4" autocomplete="off" />
+            </div>
+            <div class="flex items-center mb-4 ">
+                <Button :disabled="disableEdit" @click="addNewWorkerService" variant="outlined" class="!border-dashed w-full" style="border-width: 2px;">Add new Service</Button>
+            </div>
+        </div>
+        <DataTable 
+        :value="reflectSelectedOrder.workerService" >
+          <Column field="status" header="Staff" style="width: 30%;">
+            <template #body="slotProps">
+              <FloatLabel class="w-full md:w-56 mt-3">
+                <Select :disabled="disableEdit" inputId="over_label" v-model="slotProps.data.worker" :options="staffs" optionLabel="name" class="w-full text-sm"/>
+                <label class="text-sm" for="over_label">Staff</label>
+              </FloatLabel>
+            </template>
+          </Column>
+          <Column field="type" header="Service" style="width: 70%;">
+            <template #body="slotProps">
+              <div class="card flex content-center">
+                <MultiSelect :disabled="disableEdit" v-model="slotProps.data.services" display="chip" :options="services" optionLabel="name" placeholder="Select Service"
+                    :maxSelectedLabels="3" class="w-full md:w-20rem" />
+              </div>
+            </template>
+          </Column>
+          <Column :exportable="false">
+          <template #body="slotProps">
+              <Button 
+              icon="pi pi-trash" 
+              outlined 
+              rounded 
+              :disabled="disableEdit"
+              severity="danger" 
+              @click="confirmDeleteProduct(slotProps.data)" />
+          </template>
+        </Column>
+        </DataTable>
+        <div class="flex justify-start gap-4 mt-4 fixed bottom-0 left-0 w-full p-4 border border-slate-400 bg-white">
+          <div class="flex gap-4">
+            <ConfirmPopup group="saveOrderDetail"></ConfirmPopup>
+            <Button 
+            v-if = "reflectSelectedOrder.order.status !== OrderStatus.Payment"
+            @click="confirmSaveInformation($event)" style="border-width: 2px;">Save Information</Button>
+            <Button 
+            v-if = "reflectSelectedOrder.order.status === OrderStatus.Payment" 
+            @click="visibleEdit = false" 
+            style="border-width: 2px;">CheckOut</Button>
+            <Button v-else 
+            @click="updateOrderInformation" 
+            style="border-width: 2px;" >Update Status</Button>
+            </div>
+        </div>
+        </Sidebar>  
     </SectionMain>
   </LayoutAuthenticated>
 </template>

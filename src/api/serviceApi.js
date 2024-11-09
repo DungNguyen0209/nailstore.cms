@@ -12,3 +12,7 @@ export async function createServiceByAdmin(item) {
 export async function getAllCategories(item) {
   return await api.get('api/services/categories', item)
 }
+
+export async function getServiceForDropDown() {
+  return await api.get('api/services/getServiceForDropdown')
+}
