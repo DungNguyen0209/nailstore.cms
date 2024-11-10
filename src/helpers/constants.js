@@ -9,3 +9,8 @@ export const ErrorCode = {
     Payment: "Payment",
     Done: "Done"
   };
+
+  export const AccountStatus = {
+    Free: "Free",
+    Busy: "Busy",
+  };

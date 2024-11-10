@@ -43,13 +43,9 @@ export async function getOrderDetail(id) {
 });
 }
 
-export async function updateOrderInfo({order, serviceWorker}) {
-  console.log({
-    serviceWorker: serviceWorker,
-    order: order,
-  });
+export async function updateOrderInfo(order, serviceWorker) {
   return await api.post(`api/orders/updateOrderInformation`, {
-    serviceWorker: serviceWorker,
+    workerService: serviceWorker,
     order: order,
   });
 }

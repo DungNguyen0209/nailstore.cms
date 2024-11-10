@@ -17,7 +17,7 @@ import { getServiceForDropDown } from '@/api/serviceApi'
 import { OrderStatus } from '@/helpers/constants'
 import { updateOrderInfo } from '@/api/orderApi'
 import { useConfirm } from "primevue/useconfirm";
-
+import {AccountStatus} from '@/helpers/constants'
 const confirm = useConfirm();
 const { showErrorCommonMessage, showSuccessUpdateOrder } = useToastMessage();
 const masterData = useMasterDataStore()
@@ -30,7 +30,7 @@ const visibleEdit = ref(false)
 const reflectSelectedOrder = ref(null)
 const services = ref(null)
 const staffs = ref(null)
-
+ 
 onMounted(async () => {
   refreshNewService()
   await getOrders({pageSize: pageSize.value, pageNumber: currentPage.value})
@@ -58,7 +58,7 @@ const editOrder = async (order) => {
       workerService: resp.data?.workerService?.map(x => ({
         worker: {
           code: x.worker.id,
-          name: x.worker.fullname
+          name: x.worker.fullName
         },
         services: x.services.map(s => ({
           code: s.id,
@@ -80,13 +80,15 @@ const editOrder = async (order) => {
     })
 
     await getStaffForDropDown()
-    .then((resp) =>{
-      staffs.value = resp.data?.map(s =>({
-        code : s.value, 
-        name: s.label
+    .then((resp) => {
+      staffs.value = resp.data?.filter(s => s.value === AccountStatus.Free).map(s => ({
+      code: s.id,
+      name: s.label
       }))
+      staffs.value.push(...reflectSelectedOrder.value.workerService.map(x => x.worker))
     })
   visibleEdit.value = true
+
 }
 
 async function getPagingOrders(params) {
@@ -121,6 +123,12 @@ const disableEdit = computed(() => {
   return reflectSelectedOrder.value?.order?.status === OrderStatus.Payment
 })
 
+const isInvalidWorker = (worker) => {
+  if (worker === null) {
+    return true
+  }
+  return reflectSelectedOrder.value.workerService?.filter(x => x.worker.code === worker.code).length > 1
+}
 // function updateOrderDetail(){
 //   if(reflectSelectedOrder.value.workerService.length === 0){
 //     showErrorCommonMessage("Error Message", "Plase fill the service")
@@ -138,20 +146,20 @@ const disableEdit = computed(() => {
 
 async function saveOrderInformation() {
   console.log(reflectSelectedOrder.value.note)
-  console.log({workerService: reflectSelectedOrder.value.workerService.map(x => ({
+  console.log("=====",reflectSelectedOrder.value.workerService.map(x => ({
       workerId: x.worker.code,
       services: x.services.map(s => s.code)
-    }))})
+    })))
   await updateOrderInfo({
-    order: {
+
       id: reflectSelectedOrder.value.order.id,
       note: reflectSelectedOrder.value.note,
-    }},
-    {workerService: reflectSelectedOrder.value.workerService.map(x => ({
+    },
+    reflectSelectedOrder.value.workerService.map(x => ({
       workerId: x.worker.code,
-      services: x.services.map(s => s.code)
+      serviceId: x.services.map(s => s.code)
     }))
-  })
+  )
   .then(() => {
     showSuccessUpdateOrder( )
     visibleEdit.value = false
@@ -221,7 +229,7 @@ const confirmSaveInformation = (event) => {
           <Column field="status" header="Staff" style="width: 30%;">
             <template #body="slotProps">
               <FloatLabel class="w-full md:w-56 mt-3">
-                <Select :disabled="disableEdit" inputId="over_label" v-model="slotProps.data.worker" :options="staffs" optionLabel="name" class="w-full text-sm"/>
+                <Select :invalid = "isInvalidWorker(slotProps.data.worker.code)" :disabled="disableEdit" inputId="over_label" v-model="slotProps.data.worker" :options="staffs" optionLabel="name" class="w-full text-sm"/>
                 <label class="text-sm" for="over_label">Staff</label>
               </FloatLabel>
             </template>
@@ -246,7 +254,7 @@ const confirmSaveInformation = (event) => {
           </template>
         </Column>
         </DataTable>
-        <div class="flex justify-start gap-4 mt-4 fixed bottom-0 left-0 w-full p-4 border border-slate-400 bg-white">
+        <div class="flex justify-start gap-4 mt-4 sticky bottom-0 end-0 w-full p-4 border border-slate-400 bg-white">
           <div class="flex gap-4">
             <ConfirmPopup group="saveOrderDetail"></ConfirmPopup>
             <Button 
