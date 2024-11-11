@@ -83,9 +83,6 @@ async function createNewService() {
     }).catch(() => {})
 }
 
-async function name(params) {
-  console.log(params)
-}
 </script>
 
 <template>
@@ -101,7 +98,7 @@ async function name(params) {
               <label  for="category" class="font-semibold dark:text-white w-24">Category</label>
               <Dropdown v-model="newService.type" ref="dropDown" checkmark :options="categories" optionLabel="name" placeholder="Select Category" class="w-full md:w-14rem dark:bg-slate-800" >
                 <template #dropdownicon>
-                  <i v-if = "newService.type == null" :class="dropDown.clicked ? 'pi pi-angle-down' : 'pi pi-align-justify'"></i>
+                  <i v-if = "newService.type == null" :class="dropDown?.clicked ? 'pi pi-angle-down' : 'pi pi-align-justify'"></i>
                   <i v-else :class="'pi pi pi-check'"  style="color: green"></i>
                 </template>
                 <!-- <template #dropdownicon>
