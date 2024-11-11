@@ -1,7 +1,5 @@
 <script setup>
-import { mdiMonitorCellphone, mdiTableBorder } from '@mdi/js'
 import SectionMain from '@/components/SectionMain.vue'
-import NotificationBar from '@/components/NotificationBar.vue'
 import CardBox from '@/components/CardBox.vue'
 import LayoutAuthenticated from '@/layouts/LayoutAuthenticated.vue'
 import { onMounted, ref, computed } from 'vue'
@@ -9,13 +7,12 @@ import { useMasterDataStore } from '@/stores/masterData'
 import { useToastMessage } from '@/composables/useToast';
 import OrderTable from '@/components/Order/OrderTable.vue'
 import Order from '@/types/Order'
-import { getOrders, getOrderDetail } from '@/api/orderApi'
 import { Sidebar, Tag, Button, DataTable, Column, Select, FloatLabel, MultiSelect, ConfirmPopup } from 'primevue'
 import {getOrderSeverity} from "@/helpers/order";
 import { getStaffForDropDown } from '@/api/userApi'
 import { getServiceForDropDown } from '@/api/serviceApi'
 import { OrderStatus } from '@/helpers/constants'
-import { updateOrderInfo } from '@/api/orderApi'
+import { updateOrderInfo, getOrders, getOrderDetail, UpdateOrderStatus } from '@/api/orderApi'
 import { useConfirm } from "primevue/useconfirm";
 import {AccountStatus} from '@/helpers/constants'
 const confirm = useConfirm();
@@ -85,7 +82,8 @@ const editOrder = async (order) => {
       code: s.id,
       name: s.label
       }))
-      staffs.value.push(...reflectSelectedOrder.value.workerService.map(x => x.worker))
+      if (reflectSelectedOrder.value.workerService != null && reflectSelectedOrder.value.workerService?.length > 0)
+      staffs.value.push(...reflectSelectedOrder.value.workerService?.map(x => x.worker))
     })
   visibleEdit.value = true
 
@@ -129,27 +127,28 @@ const isInvalidWorker = (worker) => {
   }
   return reflectSelectedOrder.value.workerService?.filter(x => x.worker.code === worker.code).length > 1
 }
-// function updateOrderDetail(){
-//   if(reflectSelectedOrder.value.workerService.length === 0){
-//     showErrorCommonMessage("Error Message", "Plase fill the service")
-//     return;
-//   }
-//   if(reflectSelectedOrder.value.order.status === OrderStatus.Payment){
-//     showErrorCommonMessage("Error Message", "The status is wrong")
-//     return;
-//   }
-//   if(reflectSelectedOrder.value.order.status === OrderStatus.Open){
-//     showErrorCommonMessage("Error Message", "Can not update order")
-//     return;
-//   }
-// }
+
+
+async function UpdateOrderDetailStatus(){
+  var status;
+  if(reflectSelectedOrder.value.order.status === OrderStatus.Open){
+    status = OrderStatus.Processing
+  }
+  else if(reflectSelectedOrder.value.order.status === OrderStatus.Processing){
+    status = OrderStatus.Payment
+  }
+  await UpdateOrderStatus(reflectSelectedOrder.value.order.id, status)
+  .then(() => {
+    showSuccessUpdateOrder()
+    reflectSelectedOrder.value.order.status = status
+  })
+  .catch(() => {
+    showErrorCommonMessage("Error Message", "Can not update order")
+  });
+}
 
 async function saveOrderInformation() {
   console.log(reflectSelectedOrder.value.note)
-  console.log("=====",reflectSelectedOrder.value.workerService.map(x => ({
-      workerId: x.worker.code,
-      services: x.services.map(s => s.code)
-    })))
   await updateOrderInfo({
 
       id: reflectSelectedOrder.value.order.id,
@@ -225,8 +224,8 @@ const confirmSaveInformation = (event) => {
             </div>
         </div>
         <DataTable 
-        :value="reflectSelectedOrder.workerService" >
-          <Column field="status" header="Staff" style="width: 30%;">
+        :value="reflectSelectedOrder.workerService" class="custom-datatable">
+          <Column field="status" header="Staff" style="width: 30%;" class="sm:w-full">
             <template #body="slotProps">
               <FloatLabel class="w-full md:w-56 mt-3">
                 <Select :invalid = "isInvalidWorker(slotProps.data.worker.code)" :disabled="disableEdit" inputId="over_label" v-model="slotProps.data.worker" :options="staffs" optionLabel="name" class="w-full text-sm"/>
@@ -234,7 +233,7 @@ const confirmSaveInformation = (event) => {
               </FloatLabel>
             </template>
           </Column>
-          <Column field="type" header="Service" style="width: 70%;">
+          <Column field="type" header="Service" style="width: 70%;" class="sm:w-full">
             <template #body="slotProps">
               <div class="card flex content-center">
                 <MultiSelect :disabled="disableEdit" v-model="slotProps.data.services" display="chip" :options="services" optionLabel="name" placeholder="Select Service"
@@ -265,7 +264,7 @@ const confirmSaveInformation = (event) => {
             @click="visibleEdit = false" 
             style="border-width: 2px;">CheckOut</Button>
             <Button v-else 
-            @click="updateOrderInformation" 
+            @click="UpdateOrderDetailStatus" 
             style="border-width: 2px;" >Update Status</Button>
             </div>
         </div>
@@ -273,3 +272,20 @@ const confirmSaveInformation = (event) => {
     </SectionMain>
   </LayoutAuthenticated>
 </template>
+
+<style scoped>
+.custom-datatable {
+  @apply w-full table-fixed;
+}
+
+@media (max-width: 768px) {
+  .custom-datatable {
+    @apply block overflow-x-auto;
+  }
+
+  .custom-datatable .p-datatable-thead > tr > th,
+  .custom-datatable .p-datatable-tbody > tr > td {
+    @apply align-middle;
+  }
+}
+</style>

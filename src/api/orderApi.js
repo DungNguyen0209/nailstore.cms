@@ -49,3 +49,12 @@ export async function updateOrderInfo(order, serviceWorker) {
     order: order,
   });
 }
+
+export async function UpdateOrderStatus(orderId, status) {
+  return await api.put(`api/orders/updateOrderStatus`, null, {
+    params: {
+      id: orderId,
+      status: status,
+    }
+  });
+}
