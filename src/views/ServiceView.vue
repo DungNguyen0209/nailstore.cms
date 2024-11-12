@@ -11,7 +11,7 @@ import { onMounted, ref, defineProps } from 'vue'
 import { createService } from '@/types/Service'
 import ServiceTable from '@/components/Service/ServiceTable.vue'
 import { getListService, createServiceByAdmin, getAllCategories } from '@/api/serviceApi'
-import { Dialog, InputText, Button, Dropdown, InputGroup, InputNumber, InputGroupAddon, Textarea } from 'primevue'
+import { Dialog, InputText, Button, Dropdown, InputGroup, InputNumber, InputGroupAddon, Textarea, SelectButton } from 'primevue'
 import { useMasterDataStore } from '@/stores/masterData'
 import { useToastMessage } from '@/composables/useToast';
 
@@ -23,6 +23,9 @@ const numPages = ref(0)
 const modalCreateActive = ref(false)
 const newService = ref(createService())
 const dropDown = ref(true)
+const SelectedType = ref(null);
+const options = ref(['Service', 'Service Category']);
+
 
 onMounted(async () => {
   refreshNewService()
@@ -126,23 +129,23 @@ async function createNewService() {
         <BaseButton target="_blank" :icon="mdiGithub" label="Create new service" color="bg-pink-400" rounded-full
           small @click = "OpenCreateService"/>
       </SectionTitleLineWithButton>
-      <NotificationBar color="info" :icon="mdiMonitorCellphone">
-        <b>Responsive table.</b> Collapses on mobile
-      </NotificationBar>
-
+        <div class="mb-3">
+          <SelectButton class="border-gray-500" v-model="SelectedType" :options="options" aria-labelledby="basic" allowEmpty :invalid="value === null" >
+            <template #option="option">
+              <span>{{ option.option }}</span>
+            </template>
+          </SelectButton>
+        </div>
       <CardBox class="mb-6" has-table>
         <ServiceTable checkable :services="services" :num-pages="numPages" :current-page="currentPage" />
       </CardBox>
 
-      <!-- <SectionTitleLineWithButton :icon="mdiTableOff" title="Empty variation" /> -->
-
-      <!-- <NotificationBar color="danger" :icon="mdiTableOff">
-        <b>Empty table.</b> When there's nothing to show
-      </NotificationBar>
-
-      <CardBox>
-        <CardBoxComponentEmpty />
-      </CardBox> -->
     </SectionMain>
   </LayoutAuthenticated>
 </template>
+
+<style scoped>
+::v-deep .p-togglebutton.p-togglebutton-checked::before {
+  @apply bg-pink-400;
+}
+</style>

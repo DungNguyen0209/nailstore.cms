@@ -12,7 +12,7 @@ import {getOrderSeverity} from "@/helpers/order";
 import { getStaffForDropDown } from '@/api/userApi'
 import { getServiceForDropDown } from '@/api/serviceApi'
 import { OrderStatus } from '@/helpers/constants'
-import { updateOrderInfo, getOrders, getOrderDetail, UpdateOrderStatus } from '@/api/orderApi'
+import { updateOrderInfo, getOrders, getOrderDetail, UpdateOrderStatus, CheckoutOrder } from '@/api/orderApi'
 import { useConfirm } from "primevue/useconfirm";
 import {AccountStatus} from '@/helpers/constants'
 
@@ -27,11 +27,19 @@ const visibleEdit = ref(false)
 const reflectSelectedOrder = ref(null)
 const services = ref(null)
 const staffs = ref(null)
-const checkoutSideBar = ref(false)
 const servicePrice = ref(null)
+const totalPrice = computed((previous) => {
+  if (acceptDiscount.value) {
+    return (reflectSelectedOrder.value.order?.price - reflectSelectedOrder.value.order?.creditPointPrice).toFixed(4);
+  }
+
+  return reflectSelectedOrder.value.order?.price;
+})
+const acceptDiscount = ref(false)
 
 const masterData = useMasterDataStore()
 
+const paymentNote = ref("")
 onMounted(async () => {
     masterData.setIsLoading(true)
     refreshNewService()
@@ -160,7 +168,6 @@ async function UpdateOrderDetailStatus(){
 }
 
 async function saveOrderInformation() {
-  console.log(reflectSelectedOrder.value.note)
   await updateOrderInfo({
 
       id: reflectSelectedOrder.value.order.id,
@@ -202,6 +209,28 @@ const confirmSaveInformation = (event) => {
     });
 };
 
+const openDiscountCreditTag = ref(false);
+
+const OpenCreditDiscountTag = () => {
+  openDiscountCreditTag.value = !openDiscountCreditTag.value;
+}
+
+const CheckOut = async () => {
+  await CheckoutOrder(reflectSelectedOrder.value.order.id, 
+  totalPrice.value,
+  reflectSelectedOrder.value.order.creditPoint, 
+  reflectSelectedOrder.value.order.creditPointPrice,
+  paymentNote.value)
+  .then(() => {
+    showSuccessUpdateOrder()
+
+  })
+}
+
+const isPayment = computed(() => {
+  return reflectSelectedOrder.value?.order?.status === OrderStatus.Payment ||
+        reflectSelectedOrder.value?.order?.status === OrderStatus.Done
+})
 </script>
 
 <template>
@@ -211,13 +240,13 @@ const confirmSaveInformation = (event) => {
         <OrderTable :orders="orders" :page-numer="pageSize" :page-size="pageSize" :total-records="totalRecords" @change-paging="getPagingOrders" @edit-order="(order) => editOrder(order)" />
       </CardBox>
       <Sidebar v-bind:block-scroll ="true" v-model:visible="visibleEdit" position="top" style="height: 100%;"
-        :header="reflectSelectedOrder?.order?.status === OrderStatus.Payment ? 'Payment Checkout' : 'Detail Order'">
-        <div v-if = "reflectSelectedOrder?.order?.status === OrderStatus.Payment">
+        :header="isPayment ? 'Payment Checkout' : 'Detail Order'">
+        <div v-if = "isPayment">
             <div class="flex flex-col sm:flex-row"  >
                 <div class="sm:basis-4/6 w-full">
-                    <div  style="height: 90%;">
-                        <div class="flex flex-col h-full" >
-                            <ScrollPanel style="height: 70%;">
+                    <div>
+                        <div class="flex flex-col h-screen" >
+                            <ScrollPanel style="height: 55%;">
                                 <DataView :value="reflectSelectedOrder.workerService">
                                     <template #list="slotProps">
                                         <div class="flex flex-col">
@@ -225,18 +254,18 @@ const confirmSaveInformation = (event) => {
                                                 <Card class="contrast-15 thick-border">
                                                     <template #content>
                                                         <div class="flex flex-col sm:flex-row sm:items-center gap-4">
-                                                            <div class="flex flex-col md:flex-row justify-between md:items-center flex-1 gap-6">
-                                                                <div class="flex flex-row md:flex-col justify-between items-start gap-2">
+                                                            <div class="flex flex-col sm:flex-row justify-between sm:items-center flex-1 gap-6">
+                                                                <div class="flex flex-row sm:flex-col justify-between items-start gap-2">
                                                                     <div>
                                                                         <span class="font-medium text-surface-500 dark:text-surface-400 text-sm">{{ item.worker.name }}</span>
-                                                                        <div class="grid md:grid-cols-3 grid-cols-2 gap-4">
+                                                                        <div class="grid lg:grid-cols-5 grid-cols-2 gap-4">
                                                                             <div v-for="service in item.services" :key="service.code">
                                                                                 <Tag severity="secondary" :value="service.name"></Tag>
                                                                             </div>
                                                                         </div>
                                                                     </div>
                                                                 </div>
-                                                                <div class="flex flex-col md:items-end gap-8">
+                                                                <div class="flex flex-col sm:items-end gap-8">
                                                                     <span class="text-xl font-semibold">€{{ item.totalPrice }}</span>
                                                                 </div>
                                                             </div>
@@ -248,16 +277,24 @@ const confirmSaveInformation = (event) => {
                                     </template>
                                 </DataView>
                             </ScrollPanel>
-                            <div class="flex-shrink-0 p-4 border-t border-surface-200 rounded-md bg-slate-300">
-                                <div class="flex justify-between items-center">
-                                    <span class="text-lg font-semibold">Total Price:</span>
+                            <div class="flex flex-col p-4 border-t border-surface-200 rounded-md bg-slate-100" style="height: 35%;">
+                                <div class="flex justify-between items-center mb-3">
+                                    <span class="text-lg font-semibold">Price:</span>
                                     <span class="text-lg font-semibold">€{{ reflectSelectedOrder.order.price }}</span>
+                                </div>
+                                <div class="flex justify-between items-center mb-3">
+                                    <span class="text-lg font-semibold">Discount:</span>
+                                    <span class="text-lg font-semibold">- €{{ reflectSelectedOrder.order.creditPointPrice }}</span>
+                                </div>
+                                <div class="flex mt-auto justify-between items-center">
+                                    <span class="text-lg font-semibold">Total Price:</span>
+                                    <span class="text-lg font-semibold">€{{ totalPrice }}</span>
                                 </div>
                             </div>
                         </div>
                     </div>
                 </div>
-                <div class="flex flex-col sm:basis-2/6 w-full ml-4">
+                <div class="flex flex-col sm:basis-2/6 w-full sm:ml-4">
                     <div class="flex flex-row">
                         <i class="pi pi-user" style="font-size: 3.5rem"></i>
                         <div class="flex flex-col">
@@ -284,15 +321,35 @@ const confirmSaveInformation = (event) => {
                     </div>
                     <div class="flex flex-col mt-4">
                         <label class="text-lg font-semibold dark:text-white w-24">Note</label>
-                        <Textarea  v-model="reflectSelectedOrder.order.note" class="flex-auto h-20 dark:bg-slate-800 rounded-md" rows="4" autocomplete="off" />
+                        <Textarea  v-model="paymentNote" class="flex-auto h-20 dark:bg-slate-800 rounded-md" rows="4" autocomplete="off" />
                     </div>
-                    <div class="flex items-center gap-2 mt-4">
-                        <Checkbox inputId="ingredient1" name="pizza" value="Cheese" />
-                        <label for="ingredient1"> Use {{ reflectSelectedOrder.order.creditPoint }} points to get a discount of € {{ reflectSelectedOrder.order.creditPointPrice }} </label>
+                    <div class="flex flex-row justify-center items-center align-middle gap-2 mt-2">
+                        <Button style="width: 50%;" @click="OpenCreditDiscountTag">
+                            <i class="pi pi-credit-card"></i>
+                            <span>Credit Point {{ reflectSelectedOrder.order.creditPoint > 0 ? 1 :0 }}</span>
+                        </Button>
+                        <Button style="width: 50%;" >
+                            <i class="pi pi-wallet"></i>
+                            <span>Promotion 0</span>
+                        </Button>
+                    </div>
+                    <div class = "mt-4" v-if="openDiscountCreditTag && reflectSelectedOrder.order.creditPoint > 0">
+                      <Card class="flex flex-row h-full">
+                        <template #content>
+                          <Checkbox v-model ="acceptDiscount" binary />
+                          <label class="dark:text-white ml-4 pt-1">Credit Point: {{ reflectSelectedOrder.order.creditPoint }} € to discount  {{ reflectSelectedOrder.order.creditPointPrice }}</label>
+                        </template>
+                      </Card>
+                    </div>
+                    <div class="flex justify-center mt-5">
+                        <Button :disabled =  "totalPrice == 0 || reflectSelectedOrder.order.status === OrderStatus.Done"
+                          severity="info" 
+                          class ="w-full" 
+                          @click="CheckOut" style="border-width: 2px;">Payment</Button>
                     </div>
                 </div>
+                </div>
             </div>
-        </div>
         <div class="gap-4" v-else>
           <div class="mb-4">
               <span class="text-lg font-semibold">Họ và tên:</span>

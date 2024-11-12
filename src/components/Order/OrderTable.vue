@@ -31,7 +31,7 @@
                                     <span class="text-xl font-semibold">{{ getPrice(item.price)}}</span>
                                     <div class="flex flex-row-reverse md:flex-row gap-2">
                                         <Button icon="pi pi-heart" outlined></Button>
-                                        <Button icon="pi pi-shopping-cart" label="Update" :disabled="item.status === OrderStatus.Done" class="flex-auto md:flex-initial whitespace-nowrap"></Button>
+                                        <Button icon="pi pi-shopping-cart" label="Update" class="flex-auto md:flex-initial whitespace-nowrap"></Button>
                                     </div>
                                 </div>
                             </div>
@@ -68,7 +68,6 @@
                                     <div class="flex gap-2">
                                         <Button icon="pi pi-shopping-cart" 
                                             label="Update" 
-                                            :disabled="item.status === OrderStatus.Done" 
                                             class="flex-auto whitespace-nowrap"
                                             @click="editOrder(item)"></Button>
                                         <Button icon="pi pi-heart" outlined></Button>

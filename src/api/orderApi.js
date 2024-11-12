@@ -58,3 +58,14 @@ export async function UpdateOrderStatus(orderId, status) {
     }
   });
 }
+
+export async function CheckoutOrder(orderId, totalPrice, creditPoint, creditPointPrice, note) {
+  return await api.post(`api/orders/checkoutOrder`, 
+    {
+      orderId: orderId,
+      totalPrice: totalPrice,
+      creditPoint: creditPoint,
+      creditPointPrice: creditPointPrice,
+      note: note
+    });
+}
