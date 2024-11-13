@@ -10,34 +10,47 @@ import BaseButton from '@/components/BaseButton.vue'
 import { onMounted, ref, defineProps } from 'vue'
 import { createService } from '@/types/Service'
 import ServiceTable from '@/components/Service/ServiceTable.vue'
-import { getListService, createServiceByAdmin, getAllCategories } from '@/api/serviceApi'
+import { getListService, createServiceByAdmin, getAllCategories, getCategoryForDropDown, updateService } from '@/api/serviceApi'
 import { Dialog, InputText, Button, Dropdown, InputGroup, InputNumber, InputGroupAddon, Textarea, SelectButton } from 'primevue'
 import { useMasterDataStore } from '@/stores/masterData'
 import { useToastMessage } from '@/composables/useToast';
+import BaseMasterData from '@/types/BaseMasterData'
+import CategoryServiceTable from '@/components/Service/CategoryServiceTable.vue'
 
 const { showSuccessCreateService } = useToastMessage();
 const masterData = useMasterDataStore()
 const services = ref([createService()])
-const currentPage = ref(1)
-const numPages = ref(0)
+
+const currentPageSize = ref(10)
+const totalRecords = ref(0)
+
 const modalCreateActive = ref(false)
 const newService = ref(createService())
 const dropDown = ref(true)
-const SelectedType = ref(null);
-const options = ref(['Service', 'Service Category']);
+const SelectedType = ref(1);
+const options = ref([
+    { name: 'Service', value: 1 },
+    { name: 'Category Service', value: 2 }
+]);
 
+const isLoading = ref(false)
+const isUpdate = ref(false)
 
 onMounted(async () => {
+  isLoading.value = true
   refreshNewService()
-  await getListService({pageSize: 10, pageNumber: currentPage.value})
+  await getListService({pageSize: currentPageSize.value, pageNumber: 1})
   .then((response) => {
-      services.value = response.data?.Services?.map(serviceData => createService(serviceData))
-      console.log(services.value)
-      numPages.value = Math.ceil(response.data.Total / perPage.value)
+      services.value = response.data?.services?.map(serviceData => createService(serviceData))
+      currentPageSize.value = response.data?.pageSize
+      totalRecords.value = response.data?.total
     }).catch(() => {
       console.log("error")
     })
+    .finally(() => {
+      isLoading.value = false
     });
+    })
 
 const props = defineProps({
   label: {
@@ -47,22 +60,28 @@ const props = defineProps({
 })
 
 const refreshNewService = () => {
+  isUpdate.value = false
   newService.value = createService()
   newService.value.createdBy = masterData.userInfo?.id ?? ''
 }
 
-const categories = ref([]);
+const Dropdowncategories = ref(null);
+const categories = ref([new BaseMasterData()]);
+const categoryTotal = ref(0);
+const categoryPageSize = ref(10);
+const emit = defineEmits(['changePaging']);
+
 const pageType = ref(1);
 
 async function OpenCreateService(params) {
   if(pageType){
-    await getAllCategories()
+    await getCategoryForDropDown()
     .then((response) => {
       console.log(response)
-      categories.value = response.data?.map(category => {
+      Dropdowncategories.value = response.data?.map(category => {
         return {
           name: category.label,
-          code: category.value
+          code: category.id
         }
       })
       modalCreateActive.value = true;
@@ -71,10 +90,19 @@ async function OpenCreateService(params) {
     })
   }
 }
-async function createNewService() {
+async function createOrUpdateNewService() {
+  if(isUpdate.value){
+    await updateService(newService.value)
+    .then(() => {
+      showSuccessCreateService(newService.value);
+      modalCreateActive.value = false;
+      refreshNewService();
+    }).catch(() => {})
+    return
+  }
   await createServiceByAdmin([{
     Name: newService.value.name,
-    CategoryId: newService.value.type.code,
+    CategoryId: newService.value.categoryId,
     Price: newService.value.price,
     Description: newService.value.description,
     CreatedBy: newService.value.createdBy
@@ -86,23 +114,105 @@ async function createNewService() {
     }).catch(() => {})
 }
 
+async function ChangeTab(params) {
+  if(params.value == 1){
+    isLoading.value = true
+    await getListService({pageSize: currentPageSize.value, pageNumber: 1})
+    .then((response) => {
+      services.value = response.data?.services?.map(serviceData => createService(serviceData))
+      currentPageSize.value = response.data?.pageSize
+      totalRecords.value = response.data?.total
+      }).catch(() => {
+        console.log("error")
+      }).finally(() => {
+        isLoading.value = false
+        return 
+      });
+      return
+  }
+  await getAllCategories({pageSize: categoryPageSize.value, pageNumber: 1})
+    .then((response) => {
+        categories.value = response.data?.data?.map(category => {
+          console.log(category)
+          return  new BaseMasterData(category)})
+        categoryPageSize.value = response.data?.pageSize
+        categoryTotal.value = response.data?.total
+      }).catch(() => {
+        console.log("error")
+      }).finally(() => {
+        isLoading.value = false
+        return 
+      });
+}
+
+async function changePagingService(event) {
+  isLoading.value = true
+  await getListService({pageSize: event.rows, pageNumber: event.page + 1})
+  .then((response) => {
+    services.value = response.data?.services?.map(serviceData => createService(serviceData))
+    currentPageSize.value = response.data?.pageSize
+    totalRecords.value = response.data?.total
+    }).catch(() => {
+      console.log("error")
+    }).finally(() => {
+      isLoading.value = false
+      return 
+    });
+}
+
+const changePagingCategory = (event) => {
+  isLoading.value = true
+  getAllCategories({pageSize: event.rows, pageNumber: event.page + 1})
+  .then((response) => {
+      categories.value = response.data?.data?.map(category => {
+        console.log(category)
+        return  new BaseMasterData(category)})
+      categoryPageSize.value = response.data?.pageSize
+      categoryTotal.value = response.data?.total
+    }).catch(() => {
+      console.log("error")
+    }).finally(() => {
+      isLoading.value = false
+      return 
+    });
+}
+
+async function editService(service) {
+  await getCategoryForDropDown()
+    .then((response) => {
+      console.log(response)
+      Dropdowncategories.value = response.data?.map(category => {
+        return {
+          name: category.label,
+          code: category.id
+        }
+      })
+      newService.value = service
+      isUpdate.value = true
+      modalCreateActive.value = true;
+    }).catch((exception) => {
+      console.log("can not query categories", exception)
+    })
+
+}
+
 </script>
 
 <template>
   <LayoutAuthenticated>
     <SectionMain>
       <SectionTitleLineWithButton :icon="mdiTableBorder" title="Tables" main>
-        <Dialog class = "dark:bg-slate-900 dark:text-white" v-model:visible="modalCreateActive" modal header="Create new Sevice" :style="{ width: '40rem' }">
+        <Dialog @hide="refreshNewService" class = "dark:bg-slate-900 dark:text-white" v-model:visible="modalCreateActive" modal header="Create new Sevice" :style="{ width: '40rem' }">
           <div class="flex flex-col gap-3 mb-4">
               <label for="name" class="font-semibold dark:text-white w-24">Name</label>
               <InputText id="name" class="flex-auto dark:bg-slate-800" autocomplete="off"  v-model="newService.name"/>
           </div>
           <div class="flex flex-col gap-3 mb-4">
               <label  for="category" class="font-semibold dark:text-white w-24">Category</label>
-              <Dropdown v-model="newService.type" ref="dropDown" checkmark :options="categories" optionLabel="name" placeholder="Select Category" class="w-full md:w-14rem dark:bg-slate-800" >
+              <Dropdown v-model="newService.categoryId" ref="dropDown" checkmark :options="Dropdowncategories" optionLabel="name" optionValue="code" placeholder="Select Category" class="w-full md:w-14rem dark:bg-slate-800" >
                 <template #dropdownicon>
-                  <i v-if = "newService.type == null" :class="dropDown?.clicked ? 'pi pi-angle-down' : 'pi pi-align-justify'"></i>
-                  <i v-else :class="'pi pi pi-check'"  style="color: green"></i>
+                  <i v-if = "Boolean(!newService.categoryId)" :class="dropDown?.clicked ? 'pi pi-angle-down' : 'pi pi-align-justify'"></i>
+                    <i v-else :class="'pi pi-check font-extrabold	'" style="color: green; font-weight: 800;"></i>
                 </template>
                 <!-- <template #dropdownicon>
                   <i :class="'pi pi-angle-down'">{{ dropDown }}</i>
@@ -122,7 +232,7 @@ async function createNewService() {
           </div>
           <div class="flex justify-end gap-2">
               <Button type="button" label="Cancel" severity="secondary" @click="() => modalCreateActive = !modalCreateActive"></Button>
-              <Button type="button" label="Save" @click="createNewService"></Button>
+              <Button type="button" label="Save" @click="createOrUpdateNewService"></Button>
           </div>
 
       </Dialog>
@@ -130,14 +240,32 @@ async function createNewService() {
           small @click = "OpenCreateService"/>
       </SectionTitleLineWithButton>
         <div class="mb-3">
-          <SelectButton class="border-gray-500" v-model="SelectedType" :options="options" aria-labelledby="basic" allowEmpty :invalid="value === null" >
-            <template #option="option">
-              <span>{{ option.option }}</span>
-            </template>
+          <SelectButton class="border-gray-500" 
+          v-model="SelectedType" 
+          :options="options" 
+          aria-labelledby="basic" 
+          optionLabel="name" 
+          optionValue="value" 
+          @change="ChangeTab"
+          :invalid="value === null" >
           </SelectButton>
         </div>
-      <CardBox class="mb-6" has-table>
-        <ServiceTable checkable :services="services" :num-pages="numPages" :current-page="currentPage" />
+      <CardBox v-if="SelectedType == 1" class="mb-6" has-table>
+        <ServiceTable checkable 
+        :services="services" 
+        :isloading="isLoading"
+        :total-records="totalRecords"
+        @changePaging="changePagingService"
+        @editService="editService"
+        :page-size="currentPageSize"/>
+      </CardBox>
+      <CardBox v-else class="mb-6" has-table>
+        <CategoryServiceTable checkable 
+        :categories="categories" 
+        :isloading="isLoading"
+        @changePaging="changePagingCategory"
+        :total-records="categoryTotal"
+        :page-size="categoryPageSize" />
       </CardBox>
 
     </SectionMain>
