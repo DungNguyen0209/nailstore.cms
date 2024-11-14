@@ -71,7 +71,7 @@ const menuClick = (event, item) => {
         @aside-lg-close-click="isAsideLgActive = false"
       />
       <slot />
-      <FooterBar>
+      <FooterBar class="sticky bottom-0 bg-gray-50">
         Get more information about
         <a href="https://tailwind-vue.justboil.me/" target="_blank" class="text-blue-600"
           >Lyly nail</a
