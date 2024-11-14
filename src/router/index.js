@@ -1,6 +1,6 @@
 import { createRouter, createWebHistory } from 'vue-router'
 import Home from '@/views/HomeView.vue'
-import { useAuthStore } from '@/stores/auth.js';
+import { useAuthStore } from '@/stores/auth.js'
 import Style from '@/views/StyleView.vue'
 
 const routes = [
@@ -64,6 +64,15 @@ const routes = [
     path: '/orders',
     name: 'orders',
     component: () => import('@/views/OrderView.vue'),
+    meta: { requiresAuth: true }
+  },
+  {
+    meta: {
+      title: 'Customers'
+    },
+    path: '/customers',
+    name: 'customers',
+    component: () => import('@/views/CustomerView.vue'),
     meta: { requiresAuth: true }
   },
   {
@@ -133,19 +142,19 @@ const router = createRouter({
 })
 
 router.beforeEach(async (to, from) => {
-  const authStore = useAuthStore();
+  const authStore = useAuthStore()
   if (to.meta.requiresAuth && !authStore.isTokenValid()) {
     // this route requires auth, check if logged in
     // if not, redirect to login page.
-    if(authStore.isRefreshTokenValid() && await authStore.getRefreshToken()){
-        return true;
+    if (authStore.isRefreshTokenValid() && (await authStore.getRefreshToken())) {
+      return true
     }
     return {
       path: '/login',
       // save the location we were at to come back later
-      query: { redirect: to.fullPath },
+      query: { redirect: to.fullPath }
     }
   }
-});
+})
 
 export default router

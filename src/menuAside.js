@@ -11,7 +11,8 @@ import {
   mdiResponsive,
   mdiPalette,
   mdiReact,
-  mdiAccountCreditCard
+  mdiAccountCreditCard,
+  mdiAccountGroup
 } from '@mdi/js'
 
 export default [
@@ -29,6 +30,11 @@ export default [
     to: '/services',
     label: 'Service',
     icon: mdiTable
+  },
+  {
+    to: '/customers',
+    label: 'Customer',
+    icon: mdiAccountGroup
   },
   {
     to: '/tables',
