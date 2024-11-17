@@ -123,7 +123,7 @@ async function createOrUpdateNewService() {
         modalCreateActive.value = false
         refreshNewService()
       })
-      .catch(() => {})
+      .catch(() => { })
     return
   }
   await createServiceByAdmin([
@@ -140,7 +140,7 @@ async function createOrUpdateNewService() {
       refreshNewService()
       modalCreateActive.value = false
     })
-    .catch(() => {})
+    .catch(() => { })
 }
 
 async function createOrUpdateNewCategory() {
@@ -151,7 +151,7 @@ async function createOrUpdateNewCategory() {
         modalCategoryCreateActive.value = false
         refreshNewService()
       })
-      .catch(() => {})
+      .catch(() => { })
     return
   }
   await createCategoryByAdmin([
@@ -165,7 +165,7 @@ async function createOrUpdateNewCategory() {
       refreshNewService()
       modalCategoryCreateActive.value = false
     })
-    .catch(() => {})
+    .catch(() => { })
 }
 
 async function ChangeTab(params) {
@@ -291,170 +291,83 @@ const deleteServiceCategory = async (id) => {
 
 <template>
   <LayoutAuthenticated>
-    <SectionMain class="h-full">
-      <SectionTitleLineWithButton :icon="mdiTableBorder" title="Service " main>
-        <Dialog
-          @hide="refreshNewService"
-          class="dark:bg-slate-900 dark:text-white"
-          v-model:visible="modalCreateActive"
-          modal
-          header="Create new Sevice"
-          :style="{ width: '40rem' }"
-        >
-          <div class="flex flex-col gap-3 mb-4">
-            <label for="name" class="font-semibold dark:text-white w-24">Name</label>
-            <InputText
-              id="name"
-              class="flex-auto dark:bg-slate-800"
-              autocomplete="off"
-              v-model="newService.name"
-            />
-          </div>
-          <div class="flex flex-col gap-3 mb-4">
-            <label for="category" class="font-semibold dark:text-white w-24">Category</label>
-            <Dropdown
-              v-model="newService.categoryId"
-              ref="dropDown"
-              checkmark
-              :options="Dropdowncategories"
-              optionLabel="name"
-              optionValue="code"
-              placeholder="Select Category"
-              class="w-full md:w-14rem dark:bg-slate-800"
-            >
-              <template #dropdownicon>
-                <i
-                  v-if="Boolean(!newService.categoryId)"
-                  :class="dropDown?.clicked ? 'pi pi-angle-down' : 'pi pi-align-justify'"
-                ></i>
-                <i
-                  v-else
-                  :class="'pi pi-check font-extrabold	'"
-                  style="color: green; font-weight: 800"
-                ></i>
-              </template>
-              <!-- <template #dropdownicon>
-                  <i :class="'pi pi-angle-down'">{{ dropDown }}</i>
-                </template> -->
-            </Dropdown>
-          </div>
-          <div class="flex flex-col gap-3 mb-4">
-            <label for="category" class="font-semibold dark:text-white w-24">Price</label>
-            <InputGroup class="dark:bg-slate-800">
-              <InputGroupAddon class="dark:bg-slate-800 dark:text-white">€</InputGroupAddon>
-              <InputNumber
-                v-model="newService.price"
-                placeholder="Price"
-                class="dark:bg-slate-800 dark:text-white"
-                :minFractionDigits="2"
-                :maxFractionDigits="4"
-              />
-            </InputGroup>
-          </div>
-          <div class="flex flex-col gap-3 mb-4">
-            <label for="category" class="font-semibold dark:text-white w-24">Note</label>
-            <Textarea
-              v-model="newService.description"
-              id="category"
-              class="flex-auto h-20 dark:bg-slate-800"
-              rows="2"
-              autocomplete="off"
-            />
-          </div>
-          <div class="flex justify-end gap-2">
-            <Button
-              type="button"
-              label="Cancel"
-              severity="secondary"
-              @click="() => (modalCreateActive = !modalCreateActive)"
-            ></Button>
-            <Button type="button" label="Save" @click="createOrUpdateNewService"></Button>
-          </div>
-        </Dialog>
-        <Dialog
-          @hide="refreshNewService"
-          class="dark:bg-slate-900 dark:text-white"
-          v-model:visible="modalCategoryCreateActive"
-          modal
-          header="Create new Category"
-          :style="{ width: '40rem' }"
-        >
-          <div class="flex flex-col gap-3 mb-4">
-            <label for="name" class="font-semibold dark:text-white w-24">Name</label>
-            <InputText
-              id="name"
-              class="flex-auto dark:bg-slate-800"
-              autocomplete="off"
-              v-model="newCategory.label"
-            />
-          </div>
-          <div class="flex flex-col gap-3 mb-4">
-            <label for="category" class="font-semibold dark:text-white w-24">Note</label>
-            <Textarea
-              v-model="newCategory.value"
-              id="category"
-              class="flex-auto h-20 dark:bg-slate-800"
-              rows="2"
-              autocomplete="off"
-            />
-          </div>
-          <div class="flex justify-end gap-2">
-            <Button
-              type="button"
-              label="Cancel"
-              severity="secondary"
-              @click="() => (modalCategoryCreateActive = !modalCategoryCreateActive)"
-            ></Button>
-            <Button type="button" label="Save" @click="createOrUpdateNewCategory"></Button>
-          </div>
-        </Dialog>
-        <BaseButton
-          target="_blank"
-          :icon="mdiGithub"
-          label="Create new service"
-          color="bg-pink-400"
-          rounded-full
-          small
-          @click="OpenCreateService"
-        />
-      </SectionTitleLineWithButton>
-      <div class="mb-3">
-        <SelectButton
-          class="border-gray-500"
-          v-model="SelectedType"
-          :options="options"
-          aria-labelledby="basic"
-          optionLabel="name"
-          optionValue="value"
-          @change="ChangeTab"
-          :invalid="value === null"
-        >
-        </SelectButton>
+    <SectionMain class="h-full flex flex-col relative">
+      <div class="h-4/5">
+        <SectionTitleLineWithButton :icon="mdiTableBorder" title="Service " main>
+          <Dialog @hide="refreshNewService" class="dark:bg-slate-900 dark:text-white"
+            v-model:visible="modalCreateActive" modal header="Create new Sevice" :style="{ width: '40rem' }">
+            <div class="flex flex-col gap-3 mb-4">
+              <label for="name" class="font-semibold dark:text-white w-24">Name</label>
+              <InputText id="name" class="flex-auto dark:bg-slate-800" autocomplete="off" v-model="newService.name" />
+            </div>
+            <div class="flex flex-col gap-3 mb-4">
+              <label for="category" class="font-semibold dark:text-white w-24">Category</label>
+              <Dropdown v-model="newService.categoryId" ref="dropDown" checkmark :options="Dropdowncategories"
+                optionLabel="name" optionValue="code" placeholder="Select Category"
+                class="w-full md:w-14rem dark:bg-slate-800">
+                <template #dropdownicon>
+                  <i v-if="Boolean(!newService.categoryId)"
+                    :class="dropDown?.clicked ? 'pi pi-angle-down' : 'pi pi-align-justify'"></i>
+                  <i v-else :class="'pi pi-check font-extrabold	'" style="color: green; font-weight: 800"></i>
+                </template>
+                <!-- <template #dropdownicon>
+                    <i :class="'pi pi-angle-down'">{{ dropDown }}</i>
+                  </template> -->
+              </Dropdown>
+            </div>
+            <div class="flex flex-col gap-3 mb-4">
+              <label for="category" class="font-semibold dark:text-white w-24">Price</label>
+              <InputGroup class="dark:bg-slate-800">
+                <InputGroupAddon class="dark:bg-slate-800 dark:text-white">€</InputGroupAddon>
+                <InputNumber v-model="newService.price" placeholder="Price" class="dark:bg-slate-800 dark:text-white"
+                  :minFractionDigits="2" :maxFractionDigits="4" />
+              </InputGroup>
+            </div>
+            <div class="flex flex-col gap-3 mb-4">
+              <label for="category" class="font-semibold dark:text-white w-24">Note</label>
+              <Textarea v-model="newService.description" id="category" class="flex-auto h-20 dark:bg-slate-800" rows="2"
+                autocomplete="off" />
+            </div>
+            <div class="flex justify-end gap-2">
+              <Button type="button" label="Cancel" severity="secondary"
+                @click="() => (modalCreateActive = !modalCreateActive)"></Button>
+              <Button type="button" label="Save" @click="createOrUpdateNewService"></Button>
+            </div>
+          </Dialog>
+          <Dialog @hide="refreshNewService" class="dark:bg-slate-900 dark:text-white"
+            v-model:visible="modalCategoryCreateActive" modal header="Create new Category" :style="{ width: '40rem' }">
+            <div class="flex flex-col gap-3 mb-4">
+              <label for="name" class="font-semibold dark:text-white w-24">Name</label>
+              <InputText id="name" class="flex-auto dark:bg-slate-800" autocomplete="off" v-model="newCategory.label" />
+            </div>
+            <div class="flex flex-col gap-3 mb-4">
+              <label for="category" class="font-semibold dark:text-white w-24">Note</label>
+              <Textarea v-model="newCategory.value" id="category" class="flex-auto h-20 dark:bg-slate-800" rows="2"
+                autocomplete="off" />
+            </div>
+            <div class="flex justify-end gap-2">
+              <Button type="button" label="Cancel" severity="secondary"
+                @click="() => (modalCategoryCreateActive = !modalCategoryCreateActive)"></Button>
+              <Button type="button" label="Save" @click="createOrUpdateNewCategory"></Button>
+            </div>
+          </Dialog>
+          <BaseButton target="_blank" :icon="mdiGithub" label="Create" color="bg-pink-400" rounded-full small
+            @click="OpenCreateService" />
+        </SectionTitleLineWithButton>
+        <div class="mb-3 h-full">
+          <SelectButton class="border-gray-500" v-model="SelectedType" :options="options" aria-labelledby="basic"
+            optionLabel="name" optionValue="value" @change="ChangeTab" :invalid="value === null">
+          </SelectButton>
+        </div>
       </div>
-      <CardBox v-if="SelectedType == 1" class="mb-6" has-table>
-        <ServiceTable
-          checkable
-          :services="services"
-          :isloading="isLoading"
-          :total-records="totalRecords"
-          @changePaging="changePagingService"
-          @editService="editService"
-          @deleteService="deleteService"
-          :page-size="currentPageSize"
-        />
-      </CardBox>
-      <CardBox v-else class="mb-6" has-table>
-        <CategoryServiceTable
-          checkable
-          :categories="categories"
-          :isloading="isLoading"
-          @deleteCategory="deleteServiceCategory"
-          @changePaging="changePagingCategory"
-          :total-records="categoryTotal"
-          @editCategory="editCategory"
-          :page-size="categoryPageSize"
-        />
-      </CardBox>
+      <div>
+        <ServiceTable v-if="SelectedType == 1" checkable :services="services" :isloading="isLoading"
+          :total-records="totalRecords" @changePaging="changePagingService" @editService="editService"
+          @deleteService="deleteService" :page-size="currentPageSize" />
+        <CategoryServiceTable v-else checkable :categories="categories" :isloading="isLoading"
+          @deleteCategory="deleteServiceCategory" @changePaging="changePagingCategory" :total-records="categoryTotal"
+          @editCategory="editCategory" :page-size="categoryPageSize" />
+      </div>
     </SectionMain>
   </LayoutAuthenticated>
 </template>

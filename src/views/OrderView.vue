@@ -36,7 +36,7 @@ import {
 } from '@/api/orderApi'
 import { useConfirm } from 'primevue/useconfirm'
 import { AccountStatus } from '@/helpers/constants'
-import { mdiInvoiceListOutline } from '@mdi/js'
+import { mdiInvoice } from '@mdi/js'
 
 const confirm = useConfirm()
 const { showErrorCommonMessage, showSuccessUpdateOrder } = useToastMessage()
@@ -235,7 +235,7 @@ const confirmSaveInformation = (event) => {
     accept: async () => {
       await saveOrderInformation()
     },
-    reject: () => {}
+    reject: () => { }
   })
 }
 
@@ -268,25 +268,14 @@ const isPayment = computed(() => {
 <template>
   <LayoutAuthenticated>
     <SectionMain>
-      <SectionTitleLineWithButton :icon="mdiTableBorder" title="Order" main>
+      <SectionTitleLineWithButton :icon="mdiInvoice" title="Order" main>
       </SectionTitleLineWithButton>
       <CardBox class="mb-6" has-table>
-        <OrderTable
-          :orders="orders"
-          :page-numer="pageSize"
-          :page-size="pageSize"
-          :total-records="totalRecords"
-          @change-paging="getPagingOrders"
-          @edit-order="(order) => editOrder(order)"
-        />
+        <OrderTable :orders="orders" :page-numer="pageSize" :page-size="pageSize" :total-records="totalRecords"
+          @change-paging="getPagingOrders" @edit-order="(order) => editOrder(order)" />
       </CardBox>
-      <Sidebar
-        v-bind:block-scroll="true"
-        v-model:visible="visibleEdit"
-        position="top"
-        style="height: 100%"
-        :header="isPayment ? 'Payment Checkout' : 'Detail Order'"
-      >
+      <Sidebar v-bind:block-scroll="true" v-model:visible="visibleEdit" position="top" style="height: 100%"
+        :header="isPayment ? 'Payment Checkout' : 'Detail Order'">
         <div v-if="isPayment">
           <div class="flex flex-col sm:flex-row">
             <div class="sm:basis-4/6 w-full">
@@ -296,25 +285,15 @@ const isPayment = computed(() => {
                     <DataView :value="reflectSelectedOrder.workerService">
                       <template #list="slotProps">
                         <div class="flex flex-col">
-                          <div
-                            v-for="(item, index) in slotProps.items"
-                            :key="index"
-                            class="gap-4 mb-2"
-                          >
+                          <div v-for="(item, index) in slotProps.items" :key="index" class="gap-4 mb-2">
                             <Card class="contrast-15 thick-border">
                               <template #content>
                                 <div class="flex flex-col sm:flex-row sm:items-center gap-4">
-                                  <div
-                                    class="flex flex-col sm:flex-row justify-between sm:items-center flex-1 gap-6"
-                                  >
-                                    <div
-                                      class="flex flex-row sm:flex-col justify-between items-start gap-2"
-                                    >
+                                  <div class="flex flex-col sm:flex-row justify-between sm:items-center flex-1 gap-6">
+                                    <div class="flex flex-row sm:flex-col justify-between items-start gap-2">
                                       <div>
-                                        <span
-                                          class="font-medium text-surface-500 dark:text-surface-400 text-sm"
-                                          >{{ item.worker.name }}</span
-                                        >
+                                        <span class="font-medium text-surface-500 dark:text-surface-400 text-sm">{{
+                                          item.worker.name }}</span>
                                         <div class="grid lg:grid-cols-5 grid-cols-2 gap-4">
                                           <div v-for="service in item.services" :key="service.code">
                                             <Tag severity="secondary" :value="service.name"></Tag>
@@ -323,9 +302,7 @@ const isPayment = computed(() => {
                                       </div>
                                     </div>
                                     <div class="flex flex-col sm:items-end gap-8">
-                                      <span class="text-xl font-semibold"
-                                        >€{{ item.totalPrice }}</span
-                                      >
+                                      <span class="text-xl font-semibold">€{{ item.totalPrice }}</span>
                                     </div>
                                   </div>
                                 </div>
@@ -336,21 +313,15 @@ const isPayment = computed(() => {
                       </template>
                     </DataView>
                   </ScrollPanel>
-                  <div
-                    class="flex flex-col p-4 border-t border-surface-200 rounded-md bg-slate-100"
-                    style="height: 35%"
-                  >
+                  <div class="flex flex-col p-4 border-t border-surface-200 rounded-md bg-slate-100"
+                    style="height: 35%">
                     <div class="flex justify-between items-center mb-3">
                       <span class="text-lg font-semibold">Price:</span>
-                      <span class="text-lg font-semibold"
-                        >€{{ reflectSelectedOrder.order.price }}</span
-                      >
+                      <span class="text-lg font-semibold">€{{ reflectSelectedOrder.order.price }}</span>
                     </div>
                     <div class="flex justify-between items-center mb-3">
                       <span class="text-lg font-semibold">Discount:</span>
-                      <span class="text-lg font-semibold"
-                        >- €{{ reflectSelectedOrder.order.creditPointPrice }}</span
-                      >
+                      <span class="text-lg font-semibold">- €{{ reflectSelectedOrder.order.creditPointPrice }}</span>
                     </div>
                     <div class="flex mt-auto justify-between items-center">
                       <span class="text-lg font-semibold">Total Price:</span>
@@ -394,12 +365,8 @@ const isPayment = computed(() => {
               </div>
               <div class="flex flex-col mt-4">
                 <label class="text-lg font-semibold dark:text-white w-24">Note</label>
-                <Textarea
-                  v-model="paymentNote"
-                  class="flex-auto h-20 dark:bg-slate-800 rounded-md"
-                  rows="4"
-                  autocomplete="off"
-                />
+                <Textarea v-model="paymentNote" class="flex-auto h-20 dark:bg-slate-800 rounded-md" rows="4"
+                  autocomplete="off" />
               </div>
               <div class="flex flex-row justify-center items-center align-middle gap-2 mt-2">
                 <Button style="width: 50%" @click="OpenCreditDiscountTag">
@@ -411,31 +378,19 @@ const isPayment = computed(() => {
                   <span>Promotion 0</span>
                 </Button>
               </div>
-              <div
-                class="mt-4"
-                v-if="openDiscountCreditTag && reflectSelectedOrder.order.creditPoint > 0"
-              >
+              <div class="mt-4" v-if="openDiscountCreditTag && reflectSelectedOrder.order.creditPoint > 0">
                 <Card class="flex flex-row h-full">
                   <template #content>
                     <Checkbox v-model="acceptDiscount" binary />
-                    <label class="dark:text-white ml-4 pt-1"
-                      >Credit Point: {{ reflectSelectedOrder.order.creditPoint }} € to discount
-                      {{ reflectSelectedOrder.order.creditPointPrice }}</label
-                    >
+                    <label class="dark:text-white ml-4 pt-1">Credit Point: {{ reflectSelectedOrder.order.creditPoint }}
+                      € to discount
+                      {{ reflectSelectedOrder.order.creditPointPrice }}</label>
                   </template>
                 </Card>
               </div>
               <div class="flex justify-center mt-5">
-                <Button
-                  :disabled="
-                    totalPrice == 0 || reflectSelectedOrder.order.status === OrderStatus.Done
-                  "
-                  severity="info"
-                  class="w-full"
-                  @click="CheckOut"
-                  style="border-width: 2px"
-                  >Payment</Button
-                >
+                <Button :disabled="totalPrice == 0 || reflectSelectedOrder.order.status === OrderStatus.Done
+                  " severity="info" class="w-full" @click="CheckOut" style="border-width: 2px">Payment</Button>
               </div>
             </div>
           </div>
@@ -455,45 +410,25 @@ const isPayment = computed(() => {
           </div>
           <div class="flex items-center mb-4">
             <span class="text-lg font-semibold">Trạng thái:</span>
-            <Tag
-              :severity="getOrderSeverity(reflectSelectedOrder.order.status)"
-              :value="reflectSelectedOrder.order.status"
-              class="ml-2 text-white py-1 px-3 rounded-full"
-            />
+            <Tag :severity="getOrderSeverity(reflectSelectedOrder.order.status)"
+              :value="reflectSelectedOrder.order.status" class="ml-2 text-white py-1 px-3 rounded-full" />
           </div>
           <div class="flex flex-col mb-4">
             <label class="text-lg font-semibold dark:text-white w-24">Note</label>
-            <Textarea
-              :disabled="disableEdit"
-              v-model="reflectSelectedOrder.note"
-              class="flex-auto h-20 dark:bg-slate-800 rounded-md"
-              rows="4"
-              autocomplete="off"
-            />
+            <Textarea :disabled="disableEdit" v-model="reflectSelectedOrder.note"
+              class="flex-auto h-20 dark:bg-slate-800 rounded-md" rows="4" autocomplete="off" />
           </div>
           <div class="flex items-center mb-4">
-            <Button
-              :disabled="disableEdit"
-              @click="addNewWorkerService"
-              variant="outlined"
-              class="!border-dashed w-full"
-              style="border-width: 2px"
-              >Add new Service</Button
-            >
+            <Button :disabled="disableEdit" @click="addNewWorkerService" variant="outlined"
+              class="!border-dashed w-full" style="border-width: 2px">Add new Service</Button>
           </div>
           <DataTable :value="reflectSelectedOrder.workerService" class="custom-datatable">
             <Column field="status" header="Staff" style="width: 30%" class="sm:w-full">
               <template #body="slotProps">
                 <FloatLabel class="w-full md:w-56 mt-3">
-                  <Select
-                    :invalid="isInvalidWorker(slotProps.data.worker.code)"
-                    :disabled="disableEdit"
-                    inputId="over_label"
-                    v-model="slotProps.data.worker"
-                    :options="staffs"
-                    optionLabel="name"
-                    class="w-full text-sm"
-                  />
+                  <Select :invalid="isInvalidWorker(slotProps.data.worker.code)" :disabled="disableEdit"
+                    inputId="over_label" v-model="slotProps.data.worker" :options="staffs" optionLabel="name"
+                    class="w-full text-sm" />
                   <label class="text-sm" for="over_label">Staff</label>
                 </FloatLabel>
               </template>
@@ -501,43 +436,24 @@ const isPayment = computed(() => {
             <Column field="type" header="Service" style="width: 70%" class="sm:w-full">
               <template #body="slotProps">
                 <div class="card flex content-center">
-                  <MultiSelect
-                    :disabled="disableEdit"
-                    v-model="slotProps.data.services"
-                    display="chip"
-                    :options="services"
-                    optionLabel="name"
-                    placeholder="Select Service"
-                    :maxSelectedLabels="3"
-                    class="w-full md:w-20rem"
-                  />
+                  <MultiSelect :disabled="disableEdit" v-model="slotProps.data.services" display="chip"
+                    :options="services" optionLabel="name" placeholder="Select Service" :maxSelectedLabels="3"
+                    class="w-full md:w-20rem" />
                 </div>
               </template>
             </Column>
             <Column :exportable="false">
               <template #body="slotProps">
-                <Button
-                  icon="pi pi-trash"
-                  outlined
-                  rounded
-                  :disabled="disableEdit"
-                  severity="danger"
-                  @click="confirmDeleteProduct(slotProps.data)"
-                />
+                <Button icon="pi pi-trash" outlined rounded :disabled="disableEdit" severity="danger"
+                  @click="confirmDeleteProduct(slotProps.data)" />
               </template>
             </Column>
           </DataTable>
-          <div
-            class="flex justify-start gap-4 mt-4 sticky bottom-0 end-0 w-full p-4 border border-slate-400 bg-white"
-          >
+          <div class="flex justify-start gap-4 mt-4 sticky bottom-0 end-0 w-full p-4 border border-slate-400 bg-white">
             <div class="flex gap-4">
               <ConfirmPopup group="saveOrderDetail"></ConfirmPopup>
-              <Button @click="confirmSaveInformation($event)" style="border-width: 2px"
-                >Save Information</Button
-              >
-              <Button @click="UpdateOrderDetailStatus" style="border-width: 2px"
-                >Update Status</Button
-              >
+              <Button @click="confirmSaveInformation($event)" style="border-width: 2px">Save Information</Button>
+              <Button @click="UpdateOrderDetailStatus" style="border-width: 2px">Update Status</Button>
             </div>
           </div>
         </div>

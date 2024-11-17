@@ -50,29 +50,19 @@ const confirmDeleteServie = (event, service) => {
     accept: async () => {
       emit('deleteService', service.id)
     },
-    reject: () => {}
+    reject: () => { }
   })
 }
 </script>
 
 <template>
-  <DataTable
-    v-model:selection="selectedService"
-    :value="services"
-    dataKey="id"
-    lazy
-    :paginator="true"
-    :rows="pageSize"
-    v-bind:total-records="totalRecords"
-    :loading="isloading"
-    @page="onPageChange"
+  <DataTable v-model:selection="selectedService" :value="services" dataKey="id" lazy :paginator="true" :rows="pageSize"
+    v-bind:total-records="totalRecords" :loading="isloading" @page="onPageChange" frozen scrollable
+    :scrollHeight="'calc(48vh)'"
     paginatorTemplate="FirstPageLink PrevPageLink PageLinks NextPageLink LastPageLink CurrentPageReport RowsPerPageDropdown"
-    :rowsPerPageOptions="[5, 10, 25]"
-    currentPageReportTemplate="Showing {first} to {last} of {totalRecords} services"
-  >
+    :rowsPerPageOptions="[5, 10, 25]" currentPageReportTemplate="Showing {first} to {last} of {totalRecords} services">
     <template #header>
       <div class="flex flex-wrap gap-2 items-center justify-between">
-        <h4 class="m-1">Manage Service</h4>
         <IconField>
           <InputIcon>
             <i class="pi pi-search" />
@@ -81,7 +71,6 @@ const confirmDeleteServie = (event, service) => {
         </IconField>
       </div>
     </template>
-
     <Column selectionMode="multiple" :exportable="false"></Column>
     <Column field="name" header="Name"></Column>
     <Column field="price" header="Price">
@@ -93,21 +82,10 @@ const confirmDeleteServie = (event, service) => {
     <Column field="description" header="Description"></Column>
     <Column :exportable="false">
       <template #body="slotProps">
-        <Button
-          icon="pi pi-pencil"
-          outlined
-          rounded
-          class="mr-2"
-          @click="editProduct(slotProps.data)"
-        />
+        <Button icon="pi pi-pencil" outlined rounded class="mr-2" @click="editProduct(slotProps.data)" />
         <ConfirmPopup group="deleteCategory"></ConfirmPopup>
-        <Button
-          icon="pi pi-trash"
-          outlined
-          rounded
-          severity="danger"
-          @click="confirmDeleteServie($event, slotProps.data)"
-        />
+        <Button icon="pi pi-trash" outlined rounded severity="danger"
+          @click="confirmDeleteServie($event, slotProps.data)" />
       </template>
     </Column>
   </DataTable>

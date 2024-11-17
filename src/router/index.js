@@ -77,6 +77,15 @@ const routes = [
   },
   {
     meta: {
+      title: 'Accounts'
+    },
+    path: '/accounts',
+    name: 'accounts',
+    component: () => import('@/views/AccountView.vue'),
+    meta: { requiresAuth: true }
+  },
+  {
+    meta: {
       title: 'Tables'
     },
     path: '/tables',
