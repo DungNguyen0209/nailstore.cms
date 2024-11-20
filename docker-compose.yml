@@ -5,12 +5,16 @@ services:
       context: .
       dockerfile: Dockerfile
     container_name: nailstore.cms
+    networks:
+      - nailstore_network
     ports:
       - "8081:8081"
 
   nginx:
     image: nginx:alpine
-    container_name: nailstore.nginx 
+    container_name: nailstore.nginx
+    networks:
+      - nailstore_network
     ports:
       - "80:80"
       - "443:443"
@@ -26,6 +30,8 @@ services:
   certbot:
     image: certbot/certbot
     container_name: certbot
+    networks:
+      - nailstore_network
     volumes:
       - certbot-etc:/etc/letsencrypt
       - certbot-var:/var/lib/letsencrypt
@@ -49,3 +55,8 @@ volumes:
       type: none
       device: /usr/local/src/nailstore.cms/dhparam/
       o: bind
+
+networks:
+  nailstore_network:
+      name: nailstore_network
+      external: true
