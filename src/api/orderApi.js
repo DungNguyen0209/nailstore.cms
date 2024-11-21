@@ -36,6 +36,12 @@ export async function getOrderDetail(id) {
   })
 }
 
+export async function getPaymentDetail(id) {
+  return await api.get(`api/orders/paymentDetail`, {
+    params: { id: id }
+  })
+}
+
 export async function updateOrderInfo(order, serviceWorker) {
   return await api.post(`api/orders/updateOrderInformation`, {
     workerService: serviceWorker,
