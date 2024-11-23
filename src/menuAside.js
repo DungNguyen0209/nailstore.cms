@@ -6,11 +6,7 @@ import {
   mdiAlertCircle,
   mdiSquareEditOutline,
   mdiTable,
-  mdiViewList,
-  mdiTelevisionGuide,
-  mdiResponsive,
-  mdiPalette,
-  mdiReact,
+  mdiCogOffOutline,
   mdiAccountCreditCard,
   mdiAccountGroup,
   mdiAccountEdit
@@ -42,6 +38,11 @@ export default [
     label: 'Staff',
     icon: mdiAccountEdit
   },
+  {
+    to: '/setting',
+    label: 'Setting',
+    icon: mdiCogOffOutline
+  }
   // {
   //   to: '/tables',
   //   label: 'Tables',

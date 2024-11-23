@@ -86,6 +86,15 @@ const routes = [
   },
   {
     meta: {
+      title: 'Settings'
+    },
+    path: '/setting',
+    name: 'setting',
+    component: () => import('@/views/SettingView.vue'),
+    meta: { requiresAuth: true }
+  },
+  {
+    meta: {
       title: 'Tables'
     },
     path: '/tables',
