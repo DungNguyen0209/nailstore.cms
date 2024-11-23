@@ -299,7 +299,7 @@ async function updateCheckOutOrder() {
     })
 }
 
-async function getPaymentServiceWorker() {
+function getPaymentServiceWorker() {
   return [
     ...new Set(paymentDetail.value.serviceWorker.flatMap((x) => x.workers.map((w) => w.code)))
   ].map((workerId) => ({
@@ -308,7 +308,7 @@ async function getPaymentServiceWorker() {
       .filter((x) => x.workers.some((w) => w.code === workerId))
       .map((x) => ({
         id: x.service.code,
-        price: parseFloat(x.price)
+        price: parseFloat(x.totalPrice)
       }))
   }))
 }
@@ -341,6 +341,7 @@ const OpenCreditDiscountTag = () => {
 
 const CheckOut = async () => {
   let workerService = getPaymentServiceWorker()
+  console.log(workerService)
   await updateOrderInfo(
     {
       id: paymentDetail.value.order.id,
@@ -618,7 +619,7 @@ const CheckOut = async () => {
             </Column>
             <Column field="type" header="Service" class="w-full sm:w-3/4">
               <template #body="slotProps">
-                <FloatLabel class="w-full md:w-56 mt-3">
+                <FloatLabel class="w-full mt-3">
                   <MultiSelect
                     :disabled="disableEdit"
                     v-model="slotProps.data.services"
