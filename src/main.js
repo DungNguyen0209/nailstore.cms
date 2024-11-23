@@ -4,48 +4,48 @@ import { createPinia } from 'pinia'
 import App from './App.vue'
 import router from './router'
 import { useMainStore } from '@/stores/main.js'
-import PrimeVue from 'primevue/config';
+import PrimeVue from 'primevue/config'
 import './css/main.css'
-import Aura from '@primevue/themes/aura';
+import Aura from '@primevue/themes/aura'
 import { updatePreset } from '@primevue/themes'
-import ToastService from 'primevue/toastservice';
-import ConfirmationService from 'primevue/confirmationservice';
-import Vue3Lottie from "vue3-lottie";
-import 'primeicons/primeicons.css';
+import ToastService from 'primevue/toastservice'
+import ConfirmationService from 'primevue/confirmationservice'
+import Vue3Lottie from 'vue3-lottie'
+import 'primeicons/primeicons.css'
 
 // Init Pinia
 const pinia = createPinia()
 
 const changePrimaryColor = () => {
   updatePreset({
-      semantic: {
-          primary: {
-              50: '{pink.50}',
-              100: '{pink.100}',
-              200: '{pink.200}',
-              300: '{pink.300}',
-              400: '{pink.400}',
-              500: '{pink.500}',
-              600: '{pink.600}',
-              700: '{pink.700}',
-              800: '{pink.800}',
-              900: '{pink.900}',
-              950: '{pink.950}'
-          }
+    semantic: {
+      primary: {
+        50: '{pink.50}',
+        100: '{pink.100}',
+        200: '{pink.200}',
+        300: '{pink.300}',
+        400: '{pink.400}',
+        500: '{pink.500}',
+        600: '{pink.600}',
+        700: '{pink.700}',
+        800: '{pink.800}',
+        900: '{pink.900}',
+        950: '{pink.950}'
       }
+    }
   })
 }
 // Create Vue app
 const app = createApp(App)
-app.use(Vue3Lottie);
-app.use(ConfirmationService);
+app.use(Vue3Lottie)
+app.use(ConfirmationService)
 app.use(PrimeVue, {
   theme: {
-      preset: Aura,
+    preset: Aura
   }
 })
-changePrimaryColor();
-app.use(ToastService);
+changePrimaryColor()
+app.use(ToastService)
 app.use(router).use(pinia).mount('#app')
 
 // Init main store
@@ -69,7 +69,7 @@ mainStore.fetchSampleHistory()
 // }
 
 // Default title tag
-const defaultDocumentTitle = 'Admin One Vue 3 Tailwind'
+const defaultDocumentTitle = 'Nail store'
 
 // Set document title from route meta
 router.afterEach((to) => {
