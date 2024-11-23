@@ -72,15 +72,55 @@ const confirmDeleteServie = (event, service) => {
       </div>
     </template>
     <Column selectionMode="multiple" :exportable="false"></Column>
-    <Column field="name" header="Name"></Column>
-    <Column field="price" header="Price">
+    <Column class="justify-center" field="name" header="Name">
       <template #body="slotProps">
-        {{ formatCurrency(slotProps.data.price) }}
+        <div class="flex w-full">
+          <div class="inline sm:hidden w-1/3">
+            <span class="font-bold">Name: </span>
+          </div>
+          <div class="w-3/4 sm:w-full">
+            <span class="w-2/3"> {{ slotProps.data.name }}</span>
+          </div>
+        </div>
       </template>
     </Column>
-    <Column field="categoryName" header="Category"></Column>
-    <Column field="description" header="Description"></Column>
-    <Column :exportable="false">
+    <Column class="justify-center" field="price" header="Price">
+      <template #body="slotProps">
+        <div class="flex w-full">
+          <div class="inline sm:hidden w-1/3">
+            <span class="font-bold">Price: </span>
+          </div>
+          <div class="w-3/4 sm:w-full">
+            <span class="w-2/3"> {{ formatCurrency(slotProps.data.price) }}</span>
+          </div>
+        </div>
+      </template>
+    </Column>
+    <Column class="justify-center" field="categoryName" header="Category">
+      <template #body="slotProps">
+        <div class="flex w-full">
+          <div class="inline sm:hidden w-1/3">
+            <span class="font-bold">Category: </span>
+          </div>
+          <div class="w-2/3 sm:w-full">
+            <span> {{ slotProps.data.categoryName }}</span>
+          </div>
+        </div>
+      </template>
+    </Column>
+    <Column class="justify-center" field="description" header="Description">
+      <template #body="slotProps">
+        <div class="flex w-full">
+          <div class="inline sm:hidden w-1/3">
+            <span class="font-bold">Description: </span>
+          </div>
+          <div class="w-2/3 sm:w-full">
+            <span> {{ slotProps.data.description }}</span>
+          </div>
+        </div>
+      </template>
+    </Column>
+    <Column class="justify-center" :exportable="false">
       <template #body="slotProps">
         <Button icon="pi pi-pencil" outlined rounded class="mr-2" @click="editProduct(slotProps.data)" />
         <ConfirmPopup group="deleteCategory"></ConfirmPopup>

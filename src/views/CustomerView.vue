@@ -23,6 +23,8 @@ import { getBillOfAccount } from '@/api/billApi'
 import DataTable from 'primevue/datatable';
 import Column from 'primevue/column';
 
+
+
 const masterData = useMasterDataStore()
 const confirm = useConfirm()
 const customers = ref([new Account()])
@@ -45,7 +47,8 @@ const bills = ref({
   totalPrice: 0
 })
 
-
+const windowWidth = ref(window.innerWidth)
+const windowHeight = ref(window.innerHeight)
 
 onMounted(async () => {
   masterData.setIsLoading(true)
@@ -185,27 +188,30 @@ async function ChangeTab() {
           </div>
         </div>
         <div v-if="selectedTab === 2">
-          <DataTable :value="bills.data" :loading="masterData.isComponentLoading" scrollable>
-            <template #header>
-              <div class="flex flex-wrap gap-2 items-center justify-between">
-                <IconField>
-                  <InputIcon>
-                    <i class="pi pi-euro" />
-                  </InputIcon>
-                  <span class="ml-4"> {{ bills.totalPrice }}</span>
-                </IconField>
-              </div>
-            </template>
-            <Column field="CreatedTime" header="Check in ">
-              <template #body="slotProps">
-                {{ new Date(slotProps.data.createdTime).toLocaleString() }}
+          <div>
+            <DataTable :value="bills.data" :loading="masterData.isComponentLoading" scrollable
+              tableStyle="min-width: 30rem" class="custom-datatable">
+              <template #header>
+                <div class="flex flex-wrap gap-2 items-center justify-between">
+                  <IconField>
+                    <InputIcon>
+                      <i class="pi pi-euro" />
+                    </InputIcon>
+                    <span class="ml-4"> {{ bills.totalPrice }}</span>
+                  </IconField>
+                </div>
               </template>
-            </Column>
-            <Column field="price" header="Price">
-            </Column>
-            <Column field="discount" header="Discount"></Column>
-            <Column field="creditPoint" header="CreditPoint"></Column>
-          </DataTable>
+              <Column field="CreatedTime" header="Check in ">
+                <template #body="slotProps">
+                  {{ new Date(slotProps.data.createdTime).toLocaleString() }}
+                </template>
+              </Column>
+              <Column field="price" header="Price">
+              </Column>
+              <Column field="discount" header="Discount"></Column>
+              <Column field="creditPoint" header="CreditPoint"></Column>
+            </DataTable>
+          </div>
         </div>
         <template #footer>
           <Button label="Cancel" text severity="secondary" @click="detailInformation = false" autofocus />
@@ -224,16 +230,18 @@ async function ChangeTab() {
       <SectionTitleLineWithButton :icon="mdiAccountGroup" title="Customer" main>
       </SectionTitleLineWithButton>
       <div class="h-full">
-        <div class=" h-14
-          sticky top-16
-          flex flex-row 
-          mt-5 font-semibold 
-          bg-gray-300 dark:bg-slate-800 
-          z-10
-           dark:text-slate-100 rounded-md ">
-          <span class="w-2/6 ml-2 content-center">Name</span>
-          <span class="w-1/6 text-center content-center">Credit Point</span>
-          <span class="w-2/6 text-center content-center">Address</span>
+        <div class="hidden sm:inline">
+          <div class=" h-14
+            sticky top-16
+            flex flex-row 
+            mt-5 font-semibold 
+            bg-gray-300 dark:bg-slate-800 
+            z-10
+             dark:text-slate-100 rounded-md ">
+            <span class="w-2/6 ml-2 content-center">Name</span>
+            <span class="w-1/6 text-center content-center">Credit Point</span>
+            <span class="w-2/6 text-center content-center">Address</span>
+          </div>
         </div>
         <ScrollPanel v-if="customers.length > 0" style="width: 100%; height: 60vh" class="overflow-hidden">
           <div v-for="customer in customers" v-bind:key="customer.id">
@@ -241,8 +249,8 @@ async function ChangeTab() {
               @click="() => selectCustomer(customer)">
               <template #title>{{ customer.fullName }}</template>
               <template #content>
-                <div class="flex sm:flex-row flex-col text-center">
-                  <div class="flex flex-col w-2/6">
+                <div class="flex sm:flex-row flex-col text-center gap-1">
+                  <div class="flex flex-col w-2/6 gap-2">
                     <div class="flex flex-row gap-2">
                       <i class="pi pi-envelope content-center"></i>
                       <span>{{ customer.email }}</span>
@@ -252,10 +260,13 @@ async function ChangeTab() {
                       <a href="#" class="no-underline hover:underline text-blue-500">{{ customer.phone }}</a>
                     </div>
                   </div>
-                  <span class="w-1/6 text-center content-center font-bold text-lg">{{ customer.creditPoint }}</span>
+                  <div class="sm:w-1/6 w-full text-left sm:text-center content-center font-bold text-lg">
+                    <span class="inline sm:hidden">Credit Point:</span>
+                    <span class="ml-3 sm:m-0">{{ customer.creditPoint }}</span>
+                  </div>
                   <span style="word-break: break-word; white-space: normal"
                     class="text-wrap w-2/6 text-center content-center">{{ customer.address }}</span>
-                  <div class="w-1/6 content-center text-center align-middle ">
+                  <div class="sm:w-1/6 w-full content-center text-center align-middle ">
                     <Button icon="pi pi-trash" outlined rounded severity="danger" class="border-3"
                       @click.stop="openDeleteConfirm(customer)" />
                   </div>
@@ -277,5 +288,41 @@ async function ChangeTab() {
 .thick-border {
   border-width: 1.5px;
   /* Adjust the value as needed */
+}
+
+:deep(.custom-datatable > .p-datatable-table-container > .p-datatable-table > .p-datatable-thead),
+:deep(.custom-datatable > .p-datatable-table-container > .p-virtualscroller > .p-datatable-table > .p-datatable-thead) {
+  display: table-header-group !important;
+  background: var(--p-datatable-header-cell-background) !important;
+}
+
+:deep(.custom-datatable .p-datatable-scrollable > .p-datatable-table-container > .p-datatable-table > .p-datatable-tbody) {
+  display: table-row-group !important;
+}
+
+:deep(.custom-datatable .p-datatable-table-container table.p-datatable-table.p-datatable-scrollable-table thead.p-datatable-thead tr),
+:deep(.custom-datatable .p-datatable-table-container table.p-datatable-table.p-datatable-scrollable-table tbody.p-datatable-tbody tr) {
+  display: table-row !important;
+  border-bottom-width: 1px !important;
+  /* Adjust as needed */
+}
+
+:deep(.custom-datatable .p-datatable-table-container table.p-datatable-table.p-datatable-scrollable-table tbody.p-datatable-tbody tr td) {
+  display: table-cell !important;
+}
+
+.custom-datatable .p-datatable-tbody>tr>td,
+.custom-datatable .p-datatable-thead>tr>th {
+  display: table-cell !important;
+  width: auto !important;
+}
+
+@media (min-width: 900px) {
+
+  .custom-datatable .p-datatable-tbody>tr,
+  .custom-datatable .p-datatable-thead>tr {
+    display: table-cell !important;
+    border-bottom-width: 0px !important;
+  }
 }
 </style>

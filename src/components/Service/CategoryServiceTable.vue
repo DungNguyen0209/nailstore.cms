@@ -65,10 +65,10 @@ const confirmDeleteServie = (event, category) => {
     </template>
 
     <Column header-class="sticky! top-0! z-10000" selectionMode="multiple" :exportable="false" class="w-0.5/6"></Column>
-    <Column header-class="sticky! top-0! z-10000" field="label" header="Name" class="w-2/6"
+    <Column header-class="sticky! top-0! z-10000" field="label" header="Name" class="w-full justify-start sm:w-2/6"
       style="word-break: break-word; white-space: normal"></Column>
-    <Column header-class="sticky! top-0! z-10000" field="value" header="Description" class="w-3/6"
-      style="word-break: break-word; white-space: normal">
+    <Column header-class="sticky! top-0! z-10000" field="value" header="Description"
+      class="w-full justify-start sm:w-3/6" style="word-break: break-word; white-space: normal">
       <template #body="slotProps">
         <article class="text-pretty">
           <p>{{ slotProps.data.value }}</p>
