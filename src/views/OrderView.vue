@@ -600,13 +600,13 @@ const CheckOut = async () => {
             >
           </div>
           <DataTable :value="reflectSelectedOrder.workerService" class="custom-datatable">
-            <Column field="status" header="Staff" style="width: 30%" class="sm:w-full">
+            <Column field="status" header="Staff" class="w-full sm:w-1/4">
               <template #body="slotProps">
                 <FloatLabel class="w-full md:w-56 mt-3">
                   <Select
                     :invalid="isInvalidWorker(slotProps.data.worker.code)"
                     :disabled="disableEdit"
-                    inputId="over_label"
+                    id="over_label"
                     v-model="slotProps.data.worker"
                     :options="staffs"
                     optionLabel="name"
@@ -616,32 +616,25 @@ const CheckOut = async () => {
                 </FloatLabel>
               </template>
             </Column>
-            <Column field="type" header="Service" style="width: 70%" class="sm:w-full">
+            <Column field="type" header="Service" class="w-full sm:w-3/4">
               <template #body="slotProps">
-                <div class="card flex content-center">
+                <FloatLabel class="w-full md:w-56 mt-3">
                   <MultiSelect
                     :disabled="disableEdit"
                     v-model="slotProps.data.services"
                     display="chip"
                     :options="services"
                     dataKey="code"
+                    id="over_label_service"
                     optionLabel="name"
-                    placeholder="Select Service"
-                    class="w-full md:w-20rem"
+                    class="w-full"
                   >
-                    <!-- <template #chip="slotProps">
-                      <Chip
-                        :label="slotProps.value.name"
-                        :icon="slotProps.value.Icon"
-                        removable
-                        @remove="slotProps.removeCallback"
-                      />
-                    </template> -->
                   </MultiSelect>
-                </div>
+                  <label class="text-sm" for="over_label_service">Service</label>
+                </FloatLabel>
               </template>
             </Column>
-            <Column :exportable="false">
+            <Column :exportable="false" class="justify-start">
               <template #body="slotProps">
                 <Button
                   icon="pi pi-trash"
