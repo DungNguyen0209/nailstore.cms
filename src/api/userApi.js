@@ -16,3 +16,7 @@ export async function updatePassword({accountId, password}) {
     newPassword : password
   } )
 }
+
+export async function createNewUser(user) {
+  return await api.post('api/users', user)
+}

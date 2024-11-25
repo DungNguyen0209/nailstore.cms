@@ -1,7 +1,7 @@
 <script setup>
 import SectionMain from '@/components/SectionMain.vue'
 import LayoutAuthenticated from '@/layouts/LayoutAuthenticated.vue'
-import { onMounted, ref, watch } from 'vue'
+import { onMounted, ref, watch, computed } from 'vue'
 import { useMasterDataStore } from '@/stores/masterData'
 import { useToastMessage } from '@/composables/useToast'
 import Card from 'primevue/card'
@@ -10,7 +10,7 @@ import Paginator from 'primevue/paginator'
 import { useConfirm } from 'primevue/useconfirm'
 import { mdiAccountGroup } from '@mdi/js'
 import { getAccountByFilter, updateAccount, deleteAccount } from '@/api/account'
-import { updatePassword } from '@/api/userApi'
+import { createNewUser, updatePassword } from '@/api/userApi'
 import { Role } from '@/helpers/constants'
 import Account from '@/types/Account'
 import Button from 'primevue/button'
@@ -28,6 +28,9 @@ import { getRoleSeverity } from '@/helpers/user'
 import InputMask from 'primevue/inputmask'
 import Dropdown from 'primevue/dropdown'
 import Password from 'primevue/password'
+import User from '@/types/User'
+import BaseButton from '@/components/BaseButton.vue'
+import { mdiGithub } from '@mdi/js'
 
 const masterData = useMasterDataStore()
 const accounts = ref([new Account()])
@@ -37,7 +40,9 @@ const totalRecords = ref(0)
 const keyWord = ref('')
 const { showCommonErrorMessage, showCommonSuccessMessage } = useToastMessage()
 const selectedAccount = ref(new Account())
+const newUser = ref(new User())
 const detailInformation = ref(false)
+const isCreateNewUser = ref(false)
 const password = ref('')
 const confirmPassword = ref('')
 const options = ref([
@@ -45,7 +50,8 @@ const options = ref([
     { name: 'Change Password', value: 2 }
 ])
 const selectedTab = ref(1)
-const isEditVisible = ref(false)
+const isConfirmDelete = ref(false)
+const isConfirmCreateNewUser = ref(false)
 const bills = ref({
     data: [],
     totalPrice: 0
@@ -54,6 +60,16 @@ const dropDown = ref(true)
 
 const DropdownRole = ref([Role.Staff, Role.Manager, Role.Cashier])
 
+const isValidNewUser = computed(() => {
+    return  !!newUser.value.fullName && 
+            !!newUser.value.email && 
+            !!newUser.value.phone && 
+            !!newUser.value.role &&
+            !!newUser.value.password &&
+            !!confirmPassword.value &&
+            newUser.value.password === confirmPassword.value &&
+            !!newUser.value.username
+})
 onMounted(async () => {
     await queryAccounts()
 })
@@ -93,10 +109,36 @@ const confirmDeleteAccount = async () => {
             accounts.value = accounts.value.filter((s) => s.id != selectedAccount.value.id)
             refresh()
             showCommonSuccessMessage('Success', 'Delete account successfully')
-            isEditVisible.value = false
+            isConfirmDelete.value = false
         })
         .catch((error) => {
             showCommonErrorMessage('Error', 'Retry again')
+        })
+}
+
+const confirmCreateNewUser = async () => {
+    masterData.setComponentLoading(true)
+    await createNewUser({
+        full_Name: newUser.value.fullName,
+        email: newUser.value.email,
+        phone: newUser.value.phone,
+        role: newUser.value.role,
+        address: newUser.value.address,
+        note: newUser.value.note,
+        username: newUser.value.username,
+        password: newUser.value.password
+    })
+        .then((res) => {
+            isCreateNewUser.value = false
+            isConfirmCreateNewUser.value = false
+            showCommonSuccessMessage('Success', 'Create new user successfully')
+            refresh()
+        })
+        .catch((error) => {
+            showCommonErrorMessage('Error', 'Retry again')
+        })
+        .finally(() => {
+            masterData.setComponentLoading()
         })
 }
 
@@ -109,11 +151,12 @@ function refresh() {
         totalPrice: 0
     }
     selectedAccount.value = new Account()
+    newUser.value = new User()
 }
 
 const openDeleteConfirm = (account) => {
     selectedAccount.value = account
-    isEditVisible.value = true
+    isConfirmDelete.value = true
 }
 
 const onPageChange = async (event) => {
@@ -164,6 +207,83 @@ async function ChangeTab() {
 <template>
     <LayoutAuthenticated>
         <SectionMain>
+            <Dialog @hide="refresh" v-model:visible="isCreateNewUser" modal header="Edit Profile"
+                :style="{ width: '45rem' }">
+                <template #header>
+                    <div class="flex flex-col gap-2">
+                        <div class="inline-flex items-center gap-2">
+                            <span class="pi pi-user" style="font-size: 3rem"></span>
+                            <span class="font-bold whitespace-nowrap">{{ newUser.fullName }}</span>
+                        </div>
+                    </div>
+                </template>
+                <div>
+                    <span class="text-surface-500 dark:text-surface-400 block mb-8">Update your information.</span>
+                    <div class="flex items-center gap-4 mb-4">
+                        <label for="username" class="font-semibold w-24">FullName</label>
+                        <InputText v-model="newUser.fullName" id="username" class="flex-auto"
+                            autocomplete="off" />
+                    </div>
+                    <div class="flex items-center gap-4 mb-2">
+                        <label for="email" class="font-semibold w-24">Email</label>
+                        <InputText v-model="newUser.email" id="email" class="flex-auto" autocomplete="off" />
+                    </div>
+                    <div class="flex items-center gap-4 mb-2">
+                        <label for="phone" class="font-semibold w-24">Phone</label>
+                        <InputMask class="flex-auto" id="phone" v-model="newUser.phone" mask="(999) 999-9999"
+                            placeholder="(999) 999-9999" />
+                    </div>
+                    <div class="flex items-center gap-4 mb-2">
+                        <label for="role" class="font-semibold w-24">Role</label>
+                        <Dropdown v-model="newUser.role" ref="dropDown" checkmark :options="DropdownRole"
+                            placeholder="Select Role" class="flex-auto dark:bg-slate-800">
+                            <template #dropdownicon>
+                                <i v-if="Boolean(!newUser.role)"
+                                    :class="dropDown?.clicked ? 'pi pi-angle-down' : 'pi pi-align-justify'"></i>
+                                <i v-else :class="'pi pi-check font-extrabold	'"
+                                    style="color: green; font-weight: 800"></i>
+                            </template>
+                        </Dropdown>
+                    </div>
+                    <div class="flex items-center gap-4 mb-2">
+                        <label for="email" class="font-semibold w-24">Address</label>
+                        <Textarea v-model="newUser.address" id="category"
+                            class="flex-auto h-20 dark:bg-slate-800" rows="2" autocomplete="off" />
+                    </div>
+                    <div class="flex items-center gap-4 mb-2">
+                        <label for="email" class="font-semibold w-24">Note</label>
+                        <Textarea v-model="newUser.note" id="category" class="flex-auto h-20 dark:bg-slate-800"
+                            rows="2" autocomplete="off" />
+                    </div>
+                    <div class="flex items-center gap-4 mb-8">
+                        <label for="username" class="font-semibold w-1/3">UserName</label>
+                        <InputText v-model="newUser.username" id="email" class="flex-auto" autocomplete="off" />
+                    </div>
+                    <div class="flex items-center gap-4 mb-8">
+                        <label for="username" class="font-semibold w-1/3">New Password</label>
+                        <div class="w-2/3">
+                            <Password fluid toggleMask v-model="newUser.password" />
+                        </div>
+                    </div>
+                    <div class="flex items-center gap-4 mb-4">
+                        <label for="username" class="font-semibold w-1/3">Confirm Password</label>
+                        <div class="w-2/3">
+                            <Password fluid v-model="confirmPassword" :feedback="false" />
+                        </div>
+                    </div>
+                    <div class="flex items-center gap-4 mb-4 h-2">
+                        <label v-if="password.length > 0 && newUser.password != confirmPassword" class="w-full text-sm">You must
+                            enter a correct
+                            confirm password.</label>
+                    </div>
+                </div>
+                <template #footer>
+                    <Button label="Cancel" text severity="secondary" @click="detailInformation = false" autofocus />
+                    <Button label="Save" :disabled="!isValidNewUser"
+                        :loading="masterData.isComponentLoading" outlined severity="secondary"
+                        @click="() => isConfirmCreateNewUser = true" autofocus />
+                </template>
+            </Dialog>
             <Dialog @hide="refresh" v-model:visible="detailInformation" modal header="Edit Profile"
                 :style="{ width: '45rem' }">
                 <template #header>
@@ -242,13 +362,21 @@ async function ChangeTab() {
                         @click="saveDetailInformation" autofocus />
                 </template>
             </Dialog>
-            <Dialog v-model:visible="isEditVisible" modal header="Confirm Delete" :style="{ width: '20vw' }">
+            <Dialog v-model:visible="isConfirmDelete" modal header="Confirm Delete" :style="{ width: '20vw' }">
                 <p class="m-0">Do you want to proceed?</p>
                 <template #footer>
                     <Button label="Confirm" icon="pi pi-check" @click="confirmDeleteAccount" />
                 </template>
             </Dialog>
+            <Dialog v-model:visible="isConfirmCreateNewUser" modal header="Confirm Delete" :style="{ width: '20vw' }">
+                <p class="m-0">Do you want to create new User?</p>
+                <template #footer>
+                    <Button label="Confirm" icon="pi pi-check" @click="confirmCreateNewUser" />
+                </template>
+            </Dialog>
             <SectionTitleLineWithButton :icon="mdiAccountGroup" title="Account" main>
+                <BaseButton target="_blank" :icon="mdiGithub" label="Create" color="bg-pink-400" rounded-full small
+            @click="() => isCreateNewUser = true" />
             </SectionTitleLineWithButton>
             <div class="h-full">
                 <div class="hidden sm:inline">
