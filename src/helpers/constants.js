@@ -21,3 +21,13 @@ export const Role = {
   Cashier: 'Cashier',
   Guest: 'Guest'
 }
+
+export const PromotionType = {
+  Percent: 'percent',
+  Amount: 'amount'
+}
+
+export const SettingKey = {
+  Promotion: 'promotion',
+  CreditPoint: 'credit_point'
+}

@@ -39,9 +39,18 @@ export default [
     icon: mdiAccountEdit
   },
   {
-    to: '/setting',
     label: 'Setting',
-    icon: mdiCogOffOutline
+    icon: mdiCogOffOutline,
+    menu: [
+      {
+        label: 'Promotion',
+        to: '/promotion'
+      },
+      {
+        label: 'Credit Point',
+        to: '/creditpoint'
+      }
+    ]
   }
   // {
   //   to: '/tables',
