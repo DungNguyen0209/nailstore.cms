@@ -93,15 +93,15 @@ const routes = [
     component: () => import('@/views/SettingView.vue'),
     meta: { requiresAuth: true }
   },
-  {
-    meta: {
-      title: 'Promotion'
-    },
-    path: '/promotion',
-    name: 'promotion',
-    component: () => import('@/views/PromotionView.vue'),
-    meta: { requiresAuth: true }
-  },
+  // {
+  //   meta: {
+  //     title: 'Promotion'
+  //   },
+  //   path: '/promotion',
+  //   name: 'promotion',
+  //   component: () => import('@/views/PromotionView.vue'),
+  //   meta: { requiresAuth: true }
+  // },
   {
     meta: {
       title: 'Credit Point'
