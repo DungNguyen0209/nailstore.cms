@@ -28,7 +28,7 @@ import {
 import { getOrderSeverity } from '@/helpers/order'
 import { getStaffForDropDown } from '@/api/userApi'
 import { getServiceForDropDown } from '@/api/serviceApi'
-import { OrderStatus } from '@/helpers/constants'
+import { CreditPointType, OrderStatus } from '@/helpers/constants'
 import {
   updateOrderInfo,
   getOrders,
@@ -44,6 +44,7 @@ import Drawer from 'primevue/drawer'
 import InputNumber from 'primevue/inputnumber'
 import { Field, Form as VeeForm, useForm } from 'vee-validate'
 import * as yup from 'yup'
+import Bill from '@/types/Bill'
 
 const confirm = useConfirm()
 const { showErrorCommonMessage, showSuccessUpdateOrder } = useToastMessage()
@@ -54,18 +55,53 @@ const totalRecords = ref(0)
 const newOrder = ref(new Order({}))
 const visibleEdit = ref(false)
 const reflectSelectedOrder = ref(null)
-const paymentDetail = ref(null)
+const billInfo = ref(null)
 const services = ref(null)
 const staffs = ref(null)
-const totalPrice = computed((previous) => {
+const rawPrice = computed(() => {
+let val = 0
+  if (billInfo.value != null) {
+    val = parseFloat(billInfo.value.price) + parseFloat(creditPointBillDiscount.value.discount)
+  }
+  if (reflectSelectedOrder.value != null) {
+    val = reflectSelectedOrder.value.serviceWorker.reduce((acc, x) => acc + x.totalPrice, 0)
+  }
+  return val
+})
+
+const totalPrice = computed(() => {
   let val = 0
-  if (paymentDetail.value != null) {
-    val = paymentDetail.value.serviceWorker.reduce((acc, x) => acc + x.totalPrice, 0)
+  if (billInfo.value != null) {
+    val = billInfo.value.price
+    return val
   }
+  val = reflectSelectedOrder.value.serviceWorker.reduce((acc, x) => acc + x.totalPrice, 0)
   if (acceptDiscount.value) {
-    return (val - paymentDetail.value.order?.creditPointPrice).toFixed(4)
-  }
+    return (parseFloat(val) - parseFloat(creditPoint.value.discount)).toFixed(4)
+  } 
   return val.toFixed(4)
+})
+
+const creditPoint = computed((previous) => {
+  if(reflectSelectedOrder?.value?.order != null){}
+  const availablePoint = reflectSelectedOrder?.value?.order?.creditPoint?.find(point => point.type === CreditPointType.Availabe)?.value ?? 0;
+  const requiredPoint = reflectSelectedOrder?.value?.order?.creditPointSetting?.requiredSpending ?? 1;
+  const price = reflectSelectedOrder?.value?.order?.creditPointSetting?.value ?? 0;
+  const usingPoint = Math.floor(parseInt(availablePoint) / parseInt(requiredPoint));
+  return {
+    availablePoint: availablePoint,
+    usingPoint: usingPoint,
+    price: price,
+    discount: (usingPoint*price).toFixed(4)
+  };
+})
+
+const creditPointBillDiscount = computed(() => {
+  return {
+    usingPoint: billInfo.value.creditPoint,
+    discount: (billInfo.value.creditPoint*billInfo.value.creditPointPrice).toFixed(4),
+    isDiscount: billInfo.value.creditPoint > 0
+  }
 })
 
 const acceptDiscount = ref(false)
@@ -112,16 +148,21 @@ const refreshNewService = () => {
 }
 
 const editOrder = async (order) => {
-  paymentDetail.value = null
+  billInfo.value = null
   reflectSelectedOrder.value = null
-  if (order.status === OrderStatus.Payment || order.status === OrderStatus.Done) {
-    await getOrderPayment(order.id)
+  if (order.status === OrderStatus.Done) {
+    await getBillInformation(order.id)
       .then(() => {
         visibleEdit.value = true
       })
       .catch(() => {
         showErrorCommonMessage('Error Message', 'Can not get payment detail')
       })
+    return
+  }
+  await getOrderInformation(order.id)
+  if (reflectSelectedOrder.value.order.status === OrderStatus.Payment) {
+    visibleEdit.value = true
     return
   }
   await getServiceForDropDown().then((resp) => {
@@ -131,30 +172,6 @@ const editOrder = async (order) => {
       price: s.value
     }))
   })
-
-  await getOrderDetail(order.id)
-    .then((resp) => {
-      reflectSelectedOrder.value = {
-        order: resp.data?.order,
-        workerService:
-          resp.data?.workerService?.map((x) => ({
-            worker: {
-              code: x.worker.id,
-              name: x.worker.fullName
-            },
-            services:
-              x.services.map((s) => ({
-                code: s.id,
-                name: s.name,
-                price: s.price
-              })) || [],
-            totalPrice: x.totalPrice
-          })) || []
-      }
-    })
-    .catch(() => {
-      showErrorCommonMessage('Error Message', 'Can not get detail order')
-    })
 
   await getStaffForDropDown().then((resp) => {
     staffs.value =
@@ -173,23 +190,55 @@ const editOrder = async (order) => {
   visibleEdit.value = true
 }
 
-async function getOrderPayment(id) {
-  const resp = await getPaymentDetail(id)
-  paymentDetail.value = {
-    order: resp.data?.order,
-    serviceWorker:
-      resp.data?.serviceWorker?.map((x) => ({
-        service: {
-          code: x.service.id,
-          name: x.service.name
-        },
-        workers: x.workers.map((w) => ({
-          code: w.id,
-          name: w.fullName
-        })),
-        totalPrice: x.service.price
-      })) || []
-  }
+async function getOrderInformation(id){
+  await getOrderDetail(id)
+    .then((resp) => {
+      reflectSelectedOrder.value = {
+        order: resp.data?.order,
+        workerService:
+          resp.data?.workerService?.map((x) => ({
+            worker: {
+              code: x.worker.id,
+              name: x.worker.fullName
+            },
+            services:
+              x.services.map((s) => ({
+                code: s.id,
+                name: s.name,
+                price: s.price
+              })) || [],
+            totalPrice: parseFloat(x.totalPrice)
+          })) || [],
+          serviceWorker:
+            resp.data?.serviceWorker?.map((x) => ({
+              service: {
+                code: x.service.id,
+                name: x.service.name
+              },
+              workers: x.workers.map((w) => ({
+                code: w.id,
+                name: w.fullName
+              })),
+              totalPrice: parseFloat(x.service.price)
+            })) || [],
+          note: resp.data?.order.note
+        
+      }
+    })
+    .catch(() => {
+      showErrorCommonMessage('Error Message', 'Can not get detail order')
+    })
+}
+
+async function getBillInformation(id) {
+  await getPaymentDetail(id)
+  .then((response) => {
+    billInfo.value = new Bill(response.data)
+  })
+  .catch(() => {
+    visibleEdit.value = false
+    showErrorCommonMessage('Error Message', 'Can not get payment detail')
+  })
 }
 
 async function getPagingOrders(params) {
@@ -242,16 +291,13 @@ async function UpdateOrderDetailStatus() {
   await UpdateOrderStatus(reflectSelectedOrder.value.order.id, status)
     .then(async () => {
       if (status === OrderStatus.Payment) {
-        await getOrderPayment(reflectSelectedOrder.value.order.id)
-          .then(() => {
-            reflectSelectedOrder.value = null
-          })
-          .catch(() => {
-            showErrorCommonMessage('Error Message', 'Can not get payment detail')
-            visibleEdit.value = false
-          })
+        await getOrderInformation(reflectSelectedOrder.value.order.id)
       } else {
         reflectSelectedOrder.value.order.status = status
+      }
+      if(status === OrderStatus.Done){
+        reflectSelectedOrder.value = null
+        getBillInformation(reflectSelectedOrder.value.order.id)
       }
       showSuccessUpdateOrder()
     })
@@ -282,14 +328,13 @@ async function saveOrderInformation() {
     })
 }
 
-async function updateCheckOutOrder() {
-  let workerService = getPaymentServiceWorker()
+async function updatePaymentOrder() {
   await updateOrderInfo(
     {
-      id: paymentDetail.value.order.id,
-      note: paymentNote.value
+      id: reflectSelectedOrder.value.order.id,
+      note: reflectSelectedOrder.value.note
     },
-    workerService
+    getPaymentServiceWorker()
   )
     .then(() => {
       showSuccessUpdateOrder()
@@ -299,12 +344,13 @@ async function updateCheckOutOrder() {
     })
 }
 
+
 function getPaymentServiceWorker() {
   return [
-    ...new Set(paymentDetail.value.serviceWorker.flatMap((x) => x.workers.map((w) => w.code)))
+    ...new Set(reflectSelectedOrder.value.serviceWorker.flatMap((x) => x.workers.map((w) => w.code)))
   ].map((workerId) => ({
     workerId,
-    services: paymentDetail.value.serviceWorker
+    services: reflectSelectedOrder.value.serviceWorker
       .filter((x) => x.workers.some((w) => w.code === workerId))
       .map((x) => ({
         id: x.service.code,
@@ -312,6 +358,9 @@ function getPaymentServiceWorker() {
       }))
   }))
 }
+
+
+
 const confirmSaveInformation = (event) => {
   confirm.require({
     target: event.currentTarget,
@@ -344,19 +393,19 @@ const CheckOut = async () => {
   console.log(workerService)
   await updateOrderInfo(
     {
-      id: paymentDetail.value.order.id,
-      note: paymentNote.value
+      id: reflectSelectedOrder.value.order.id,
+      note: reflectSelectedOrder.value.note
     },
     workerService
   ).then(async () => {
     await CheckoutOrder(
-      paymentDetail.value.order.id,
+      reflectSelectedOrder.value.order.id,
       parseFloat(totalPrice.value),
-      paymentDetail.value.order.creditPoint,
-      paymentDetail.value.order.creditPointPrice,
-      paymentNote.value
+      creditPoint.value.usingPoint,
+      creditPoint.value.price,
+      reflectSelectedOrder.value.note
     ).then(() => {
-      paymentDetail.value.order.status = OrderStatus.Done
+      
       showSuccessUpdateOrder()
     })
   })
@@ -383,16 +432,179 @@ const CheckOut = async () => {
         v-model:visible="visibleEdit"
         position="top"
         style="height: 100%"
-        :header="paymentDetail != null ? 'Payment Checkout' : 'Detail Order'"
+        :header="billInfo != null ? 'Payment Checkout' : 'Detail Order'"
       >
-        <div v-if="paymentDetail != null">
+        <div v-if="billInfo != null">
           <VeeForm :validation-schema="schema">
             <div class="flex flex-col sm:flex-row">
               <div class="sm:basis-4/6 w-full">
                 <div>
                   <div class="flex flex-col h-screen">
                     <ScrollPanel style="height: 55%">
-                      <DataView :value="paymentDetail.serviceWorker">
+                      <DataView :value="billInfo.serviceWorker">
+                        <template #list="slotProps">
+                          <div class="flex flex-col">
+                            <div
+                              v-for="(item, index) in slotProps.items"
+                              :key="index"
+                              class="gap-4 mb-2"
+                            >
+                              <Card class="contrast-15 thick-border">
+                                <template #content>
+                                  <div class="flex flex-col sm:flex-row sm:items-center gap-4">
+                                    <div
+                                      class="flex flex-col sm:flex-row justify-between sm:items-center flex-1 gap-6"
+                                    >
+                                      <div
+                                        class="flex flex-row sm:flex-col justify-between items-start gap-2"
+                                      >
+                                        <div>
+                                          <span
+                                            class="font-medium text-surface-500 dark:text-surface-400 text-sm"
+                                            >{{ item.service.name }}</span
+                                          >
+                                          <div class="grid lg:grid-cols-4 grid-cols-2 gap-4">
+                                            <div v-for="worker in item.workers" :key="worker.id">
+                                              <Tag severity="secondary" :value="worker.fullName"></Tag>
+                                            </div>
+                                          </div>
+                                        </div>
+                                      </div>
+                                      <div class="flex flex-col sm:items-end gap-8">
+                                        <div class="card flex justify-center">
+                                          <InputNumber
+                                            v-model="item.totalPrice"
+                                            inputId="price_input"
+                                            mode="currency"
+                                            currency="EUR"
+                                            locale="en-US"
+                                            variant="filled"
+                                            type="price"
+                                            :class="{ 'p-invalid': errors.price }"
+                                          />
+                                          <small id="email-help" class="p-error">{{
+                                            errors.email
+                                          }}</small>
+                                        </div>
+                                        <!-- <span class="text-xl font-semibold">€{{ item.totalPrice }}</span> -->
+                                      </div>
+                                    </div>
+                                  </div>
+                                </template>
+                              </Card>
+                            </div>
+                          </div>
+                        </template>
+                      </DataView>
+                    </ScrollPanel>
+                    <div
+                      class="flex flex-col p-4 border-t border-surface-200 rounded-md bg-slate-100"
+                      style="height: 35%"
+                    >
+                      <div class="flex justify-between items-center mb-3">
+                        <span class="text-lg font-semibold">Price:</span>
+                        <span class="text-lg font-semibold">€{{ rawPrice }}</span>
+                      </div>
+                      <div class="flex justify-between items-center mb-3" v-show="creditPointBillDiscount.discount > 0">
+                        <span class="text-lg font-semibold">Discount:</span>
+                        <span class="text-lg font-semibold"
+                          >- €{{ creditPointBillDiscount.discount }}</span
+                        >
+                      </div>
+                      <div class="flex mt-auto justify-between items-center">
+                        <span class="text-lg font-semibold">Total Price:</span>
+                        <span class="text-lg font-semibold">€{{ totalPrice }}</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <div class="flex flex-col sm:basis-2/6 w-full sm:ml-4">
+                <div class="flex flex-row">
+                  <i class="pi pi-user" style="font-size: 3.5rem"></i>
+                  <div class="flex flex-col">
+                    <div class="flex flex-row w-full ml-4 gap-4">
+                      <span class="text-lg font-semibold">Full name:</span>
+                      <span class="text-gray-800 pt-0.5">{{ billInfo.ownerName }}</span>
+                    </div>
+                    <div class="flex flex-row w-full ml-4 gap-4">
+                      <i class="pi pi-phone content-center font-thin" style="font-size: 1rem"></i>
+                      <span class="text-gray-800 pb-0.5 font-thin">{{
+                        billInfo.ownerPhone
+                      }}</span>
+                    </div>
+                  </div>
+                </div>
+                <div class="flex mt-4">
+                  <div class="flex flex-col w-full ml-4 gap-1">
+                    <span>Gmail</span>
+                    <span class="text-gray-800 font-thin">{{
+                      billInfo.ownerEmail
+                    }}</span>
+                  </div>
+                  <div class="flex flex-col w-full ml-4 gap-1">
+                    <span>Check in</span>
+                    <span class="text-gray-800 font-thin">{{
+                      new Date(billInfo.checkInTime).toLocaleString()
+                    }}</span>
+                  </div>
+                </div>
+                <div class="flex flex-col mt-4">
+                  <label class="text-lg font-semibold dark:text-white w-24">Note</label>
+                  <Textarea
+                    v-model="billInfo.note"
+                    class="flex-auto h-20 dark:bg-slate-800 rounded-md"
+                    rows="4"
+                    autocomplete="off"
+                  />
+                </div>
+                <div class="flex flex-row justify-center items-center align-middle gap-2 mt-2">
+                  <Button style="width: 50%" disabled>
+                    <i class="pi pi-credit-card"></i>
+                    <span>Credit Point {{ creditPointBillDiscount.discount > 0 ? 1 : 0 }}</span>
+                  </Button>
+                  <Button style="width: 50%">
+                    <i class="pi pi-wallet"></i>
+                    <span>Promotion 0</span>
+                  </Button>
+                </div>
+                <div
+                  class="mt-4"
+                  v-if="creditPointBillDiscount.isDiscount > 0"
+                >
+                  <Card class="flex flex-row h-full">
+                    <template #content>
+                      <Checkbox v-model="creditPointBillDiscount.isDiscount" binary />
+                      <label class="dark:text-white ml-4 pt-1"
+                        >Credit Point: {{ creditPointBillDiscount.usingPoint }}
+                        to discount
+                        {{ creditPointBillDiscount.discount }} €</label
+                      >
+                    </template>
+                  </Card>
+                </div>
+                <div class="flex justify-center mt-5">
+                  <Button
+                    severity="info"
+                    class="w-full"
+                    @click="updateCheckOutOrder"
+                    style="border-width: 2px"
+                  >
+                    Update Order
+                  </Button>
+                </div>
+              </div>
+            </div>
+          </VeeForm>
+        </div>
+        <div v-else-if="reflectSelectedOrder.order.status === OrderStatus.Payment">
+          <VeeForm :validation-schema="schema">
+            <div class="flex flex-col sm:flex-row">
+              <div class="sm:basis-4/6 w-full">
+                <div>
+                  <div class="flex flex-col h-screen">
+                    <ScrollPanel style="height: 55%">
+                      <DataView :value="reflectSelectedOrder.serviceWorker">
                         <template #list="slotProps">
                           <div class="flex flex-col">
                             <div
@@ -454,12 +666,12 @@ const CheckOut = async () => {
                     >
                       <div class="flex justify-between items-center mb-3">
                         <span class="text-lg font-semibold">Price:</span>
-                        <span class="text-lg font-semibold">€{{ paymentDetail.order.price }}</span>
+                        <span class="text-lg font-semibold">€{{ rawPrice }}</span>
                       </div>
-                      <div class="flex justify-between items-center mb-3">
+                      <div class="flex justify-between items-center mb-3" v-show="acceptDiscount">
                         <span class="text-lg font-semibold">Discount:</span>
                         <span class="text-lg font-semibold"
-                          >- €{{ paymentDetail.order.creditPointPrice }}</span
+                          >- €{{ creditPoint.discount }}</span
                         >
                       </div>
                       <div class="flex mt-auto justify-between items-center">
@@ -476,34 +688,34 @@ const CheckOut = async () => {
                   <div class="flex flex-col">
                     <div class="flex flex-row w-full ml-4 gap-4">
                       <span class="text-lg font-semibold">Full name:</span>
-                      <span class="text-gray-800 pt-0.5">{{ paymentDetail.order.ownerName }}</span>
+                      <span class="text-gray-800 pt-0.5">{{ reflectSelectedOrder.order.ownerName }}</span>
                     </div>
                     <div class="flex flex-row w-full ml-4 gap-4">
                       <i class="pi pi-phone content-center font-thin" style="font-size: 1rem"></i>
                       <span class="text-gray-800 pb-0.5 font-thin">{{
-                        paymentDetail.order.ownerPhone
+                        reflectSelectedOrder.order.ownerPhone
                       }}</span>
                     </div>
                   </div>
                 </div>
                 <div class="flex mt-4">
                   <div class="flex flex-col w-full ml-4 gap-1">
-                    <span>Credit point</span>
+                    <span>Gmail</span>
                     <span class="text-gray-800 font-thin">{{
-                      paymentDetail.order.ownerEmail
+                      reflectSelectedOrder.order.ownerEmail
                     }}</span>
                   </div>
                   <div class="flex flex-col w-full ml-4 gap-1">
                     <span>Check in</span>
                     <span class="text-gray-800 font-thin">{{
-                      new Date(paymentDetail.order.createdTime).toLocaleString()
+                      new Date(reflectSelectedOrder.order.createdTime).toLocaleString()
                     }}</span>
                   </div>
                 </div>
                 <div class="flex flex-col mt-4">
                   <label class="text-lg font-semibold dark:text-white w-24">Note</label>
                   <Textarea
-                    v-model="paymentNote"
+                    v-model="reflectSelectedOrder.order.note"
                     class="flex-auto h-20 dark:bg-slate-800 rounded-md"
                     rows="4"
                     autocomplete="off"
@@ -512,7 +724,7 @@ const CheckOut = async () => {
                 <div class="flex flex-row justify-center items-center align-middle gap-2 mt-2">
                   <Button style="width: 50%" @click="OpenCreditDiscountTag">
                     <i class="pi pi-credit-card"></i>
-                    <span>Credit Point {{ paymentDetail.order.creditPoint > 0 ? 1 : 0 }}</span>
+                    <span>Credit Point {{ creditPoint.usingPoint > 0 ? 1 : 0 }}</span>
                   </Button>
                   <Button style="width: 50%">
                     <i class="pi pi-wallet"></i>
@@ -521,15 +733,15 @@ const CheckOut = async () => {
                 </div>
                 <div
                   class="mt-4"
-                  v-if="openDiscountCreditTag && paymentDetail.order.creditPoint > 0"
+                  v-if="openDiscountCreditTag"
                 >
                   <Card class="flex flex-row h-full">
                     <template #content>
                       <Checkbox v-model="acceptDiscount" binary />
                       <label class="dark:text-white ml-4 pt-1"
-                        >Credit Point: {{ paymentDetail.order.creditPoint }}
-                        € to discount
-                        {{ paymentDetail.order.creditPointPrice }}</label
+                        >Credit Point: {{ creditPoint.usingPoint }}
+                        to discount
+                        {{ creditPoint.discount }} €</label
                       >
                     </template>
                   </Card>
@@ -538,7 +750,7 @@ const CheckOut = async () => {
                   <Button
                     severity="info"
                     class="w-full"
-                    @click="updateCheckOutOrder"
+                    @click="updatePaymentOrder"
                     style="border-width: 2px"
                   >
                     Update Order
@@ -546,7 +758,7 @@ const CheckOut = async () => {
                 </div>
                 <div class="flex justify-center mt-5">
                   <Button
-                    :disabled="totalPrice == 0 || paymentDetail.order.status === OrderStatus.Done"
+                    :disabled="totalPrice == 0"
                     severity="info"
                     class="w-full"
                     @click="CheckOut"

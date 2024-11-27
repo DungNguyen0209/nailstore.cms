@@ -7,9 +7,15 @@ class Bill {
     updatedTime,
     createdTime,
     creditPoint,
+    creditPointPrice,
     discount,
     createdBy,
     updatedBy,
+    checkInTime,
+    ownerId,
+    ownrName,
+    ownerPhone,
+    ownerEmail,
     isDeleted,
     serviceWorker
   } = {}) {
@@ -24,8 +30,14 @@ class Bill {
     this.updatedBy = updatedBy == null ? '' : updatedBy
     this.isDeleted = isDeleted == null ? false : isDeleted
     this.creditPoint = creditPoint == null ? 0 : creditPoint
+    this.creditPointPrice = creditPointPrice == null ? 0 : creditPointPrice
     this.discount = discount == null ? 0 : parseFloat(discount)
     this.serviceWorker = serviceWorker == null ? {} : serviceWorker
+    this.checkInTime = checkInTime == null ? new Date() : new Date(checkInTime)
+    this.ownerId = ownerId == null ? '' : ownerId
+    this.ownrName = ownrName == null ? '' : ownrName
+    this.ownerPhone = ownerPhone == null ? '' : ownerPhone
+    this.ownerEmail = ownerEmail == null ? '' : ownerEmail
   }
 
   // Example method to format the created time

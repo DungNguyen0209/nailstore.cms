@@ -1,7 +1,7 @@
 // Account.js
 import { uuidv7 } from "uuidv7"
 class Account {
-  constructor({ id, fullName, phone, email, tenant, role, note, creditPoint, address } = {}) {
+  constructor({ id, fullName, phone, email, tenant, role, note, creditPoints, address } = {}) {
     this.id = id == null ? uuidv7() : id
     this.fullName = fullName == null ? '' : fullName
     this.phone = phone == null ? '' : phone
@@ -10,7 +10,7 @@ class Account {
     this.role = role == null ? '' : role
     this.note = note == null ? '' : note
     this.address = address == null ? '' : address
-    this.creditPoint = creditPoint == null ? 0 : parseFloat(creditPoint)
+    this.creditPoints = creditPoints == null ? 0 : creditPoints
   }
 
   updatePhone(newPhone) {

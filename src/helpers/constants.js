@@ -31,3 +31,8 @@ export const SettingKey = {
   Promotion: 'promotion',
   CreditPoint: 'credit_point'
 }
+
+export const CreditPointType = {
+  Availabe: 'available',
+  LifeSpan: 'life_span'
+}

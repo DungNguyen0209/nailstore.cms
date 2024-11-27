@@ -59,11 +59,13 @@ export async function UpdateOrderStatus(orderId, status) {
 }
 
 export async function CheckoutOrder(orderId, totalPrice, creditPoint, creditPointPrice, note) {
+  console.log("==", orderId, totalPrice, creditPoint, creditPointPrice, note)
   return await api.post(`api/orders/checkoutOrder`, {
     orderId: orderId,
-    totalPrice: totalPrice,
+    totalPrice: parseFloat(totalPrice),
     creditPoint: creditPoint,
-    creditPointPrice: creditPointPrice,
+    creditPointPrice: parseFloat(creditPointPrice),
+    promotion : null,
     note: note
   })
 }

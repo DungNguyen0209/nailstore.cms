@@ -10,6 +10,7 @@ import Paginator from 'primevue/paginator'
 import { useConfirm } from 'primevue/useconfirm'
 import { mdiAccountGroup } from '@mdi/js'
 import { getAccountByFilter, updateAccount, deleteAccount } from '@/api/account'
+import { CreditPointType } from '@/helpers/constants'
 import { Role } from '@/helpers/constants'
 import Account from '@/types/Account'
 import Button from 'primevue/button'
@@ -228,7 +229,7 @@ const onRowCollapse = (event) => {
           <div class="flex items-center gap-4 mb-2">
             <label for="email" class="font-semibold w-24">Credit Point</label>
             <span class="flex-auto" style="font-size: 2rem">{{
-              selectedCustomer.creditPoint
+              selectedCustomer.creditPoints?.find(point => point.type === CreditPointType.Availabe)?.value
             }}</span>
           </div>
         </div>
@@ -369,7 +370,7 @@ const onRowCollapse = (event) => {
                     class="sm:w-1/6 w-full text-left sm:text-center content-center font-bold text-lg"
                   >
                     <span class="inline sm:hidden">Credit Point:</span>
-                    <span class="ml-3 sm:m-0">{{ customer.creditPoint }}</span>
+                    <span class="ml-3 sm:m-0">{{ customer.creditPoints?.find(point => point.type === CreditPointType.Availabe)?.value }}</span>
                   </div>
                   <span
                     style="word-break: break-word; white-space: normal"
