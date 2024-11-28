@@ -2,12 +2,14 @@
     <div class="card">
         <DataView :value="orders" :layout="layout">
             <template #header>
-                <div class="flex justify-end">
-                    <SelectButton v-model="layout" :options="options" :allowEmpty="false">
+                <div class="flex justify-end gap-2">
+                    <!-- <SelectButton v-model="layout" :options="options" :allowEmpty="false">
                         <template #option="{ option }">
                             <i :class="[option === 'list' ? 'pi pi-bars' : 'pi pi-table']" />
                         </template>
-                    </SelectButton>
+                    </SelectButton> -->
+                    <Button icon="pi pi-download" label="Auto Asign" aria-label="Filter" class="p-button-sm" @click="emit('autoAssign')" :disabled="disableAutoAsssign"></Button>
+                    <Button icon="pi pi-refresh" aria-label="Filter" class="p-button-sm" @click="emit('reloadOrders')"/>
                 </div>
             </template>
 
@@ -85,7 +87,7 @@
 
 <script setup>
 import { OrderStatus } from "@/helpers/constants";
-import { ref, onMounted } from "vue";
+import { ref, onMounted, computed } from "vue";
 import { defineProps } from "vue";
 import { Button, Tag, SelectButton, DataView  } from "primevue";
 import Paginator from 'primevue/paginator';
@@ -115,7 +117,10 @@ const props = defineProps({
     }
 })
 
-const emit = defineEmits(['changePaging', 'editOrder']);
+const disableAutoAsssign = computed(() => {
+    return props.orders.filter(order => order.status == OrderStatus.Open).length > 0;
+});
+const emit = defineEmits(['changePaging', 'editOrder', 'reloadOrders', 'autoAssign']);
 
 onMounted(() => {
     console.log("orders", props.orders)

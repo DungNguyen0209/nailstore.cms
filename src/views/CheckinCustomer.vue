@@ -177,7 +177,6 @@ const checkInAction = async () => {
       description: ""
     };
   }
-  console.log("orderData", orderData);
   await createOrder(orderData)
     .then(response => {
       router.push({ name: 'CheckinSucess' });

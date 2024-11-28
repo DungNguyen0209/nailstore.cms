@@ -15,7 +15,7 @@ import { Dialog, InputText, Button, Dropdown, InputGroup, InputNumber, InputGrou
 import { useMasterDataStore } from '@/stores/masterData'
 import { useToastMessage } from '@/composables/useToast';
 
-const { showSuccessCreateService } = useToastMessage();
+const { showSuccessCreateService, showCommonErrorMessage } = useToastMessage();
 const masterData = useMasterDataStore()
 const services = ref([createService()])
 const currentPage = ref(1)
@@ -29,10 +29,9 @@ onMounted(async () => {
   await getListService({pageSize: 10, pageNumber: currentPage.value})
   .then((response) => {
       services.value = response.data?.Services?.map(serviceData => createService(serviceData))
-      console.log(services.value)
       numPages.value = Math.ceil(response.data.Total / perPage.value)
     }).catch(() => {
-      console.log("error")
+      showCommonErrorMessage("Error", "Can't get services")
     })
     });
 
@@ -55,7 +54,6 @@ async function OpenCreateService(params) {
   if(pageType){
     await getAllCategories()
     .then((response) => {
-      console.log(response)
       categories.value = response.data?.map(category => {
         return {
           name: category.label,
@@ -64,7 +62,7 @@ async function OpenCreateService(params) {
       })
       modalCreateActive.value = true;
     }).catch((exception) => {
-      console.log("can not query categories", exception)
+      showCommonErrorMessage("Error", "Can't get categories")
     })
   }
 }
@@ -83,9 +81,6 @@ async function createNewService() {
     }).catch(() => {})
 }
 
-async function name(params) {
-  console.log(params)
-}
 </script>
 
 <template>

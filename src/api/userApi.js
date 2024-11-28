@@ -6,8 +6,12 @@ export async function geUserByPhone(Phone) {
   })
 }
 
-export async function getStaffForDropDown() {
-  return await api.get('api/accounts/getStaffForDropdown')
+export async function getStaffForDropDown(fromDate, toDate) {
+  return await api.get('api/accounts/getStaffForDropdown', 
+    {params : {
+      fromDate : fromDate,
+      toDate : toDate
+    }})
 }
 
 export async function updatePassword({accountId, password}) {

@@ -68,7 +68,6 @@ export function useToastMessage() {
         label: 'Save'
       },
       accept: () => {
-        console.log('accept')
         accept()
       },
       reject: () => {

@@ -2,7 +2,7 @@
 import SectionMain from '@/components/SectionMain.vue'
 import CardBox from '@/components/CardBox.vue'
 import LayoutAuthenticated from '@/layouts/LayoutAuthenticated.vue'
-import { onMounted, ref, computed } from 'vue'
+import { onMounted, ref, computed, watch } from 'vue'
 import { useMasterDataStore } from '@/stores/masterData'
 import { useToastMessage } from '@/composables/useToast'
 import OrderTable from '@/components/Order/OrderTable.vue'
@@ -25,6 +25,9 @@ import {
   Checkbox,
   Chip
 } from 'primevue'
+import { convertTZ } from '@/helpers/time'
+import { config } from '@/helpers/config'
+import { onlyUnique } from '@/helpers/array'
 import { getOrderSeverity } from '@/helpers/order'
 import { getStaffForDropDown } from '@/api/userApi'
 import { getServiceForDropDown } from '@/api/serviceApi'
@@ -35,7 +38,8 @@ import {
   getOrderDetail,
   UpdateOrderStatus,
   CheckoutOrder,
-  getPaymentDetail
+  getPaymentDetail,
+  autoAssignOrderForStaff
 } from '@/api/orderApi'
 import { useConfirm } from 'primevue/useconfirm'
 import { AccountStatus } from '@/helpers/constants'
@@ -45,6 +49,8 @@ import InputNumber from 'primevue/inputnumber'
 import { Field, Form as VeeForm, useForm } from 'vee-validate'
 import * as yup from 'yup'
 import Bill from '@/types/Bill'
+import Tree from 'primevue/tree';
+import Dialog from 'primevue/dialog';
 
 const confirm = useConfirm()
 const { showErrorCommonMessage, showSuccessUpdateOrder } = useToastMessage()
@@ -56,8 +62,25 @@ const newOrder = ref(new Order({}))
 const visibleEdit = ref(false)
 const reflectSelectedOrder = ref(null)
 const billInfo = ref(null)
-const services = ref(null)
+const services = ref([])
+const serviceOption = ref(null)
+const selectedService = ref(null) 
 const staffs = ref(null)
+const selectedWorkerService = ref(null)
+const expandedKeys = ref({});
+
+const generateExpandedKeys = (nodes) => {
+  const keys = {};
+  nodes.forEach(node => {
+    keys[node.key] = true;
+    if (node.children) {
+      Object.assign(keys, generateExpandedKeys(node.children));
+    }
+  });
+  return keys;
+};
+
+
 const rawPrice = computed(() => {
 let val = 0
   if (billInfo.value != null) {
@@ -104,6 +127,19 @@ const creditPointBillDiscount = computed(() => {
   }
 })
 
+watch(
+  selectedService,
+  (newValue) => {
+    if (newValue != null) {
+      selectedWorkerService.value.services = services.value?.filter(
+        (x) => {
+         return x.code in newValue 
+        }
+      );
+    }
+  },
+  { immediate: true, deep: true }
+);
 const acceptDiscount = ref(false)
 
 const masterData = useMasterDataStore()
@@ -125,22 +161,26 @@ const { defineField, handleSubmit, resetForm, errors, validate } = useForm({
 
 const [price] = defineField('price')
 
+const isVisibleSelectService = ref(false)
 onMounted(async () => {
   masterData.setIsLoading(true)
   refreshNewService()
-  await getOrders({ pageSize: pageSize.value, pageNumber: currentPage.value })
+  await getDefaultOrders()
+  masterData.setIsLoading(false)
+})
+
+const getDefaultOrders = async () => {
+  return await getOrders({ pageSize: pageSize.value, pageNumber: currentPage.value })
     .then((response) => {
       totalRecords.value = response.data?.total
       pageSize.value = response.data?.pageSize
       currentPage.value = response.data?.pageNumber
       orders.value = response.data?.orders?.map((orderData) => new Order(orderData))
-      masterData.setIsLoading(false)
     })
     .catch(() => {
-      masterData.setIsLoading(false)
       showErrorCommonMessage('Error Message', 'Can not get orders')
     })
-})
+}
 
 const refreshNewService = () => {
   newOrder.value = new Order({})
@@ -166,20 +206,38 @@ const editOrder = async (order) => {
     return
   }
   await getServiceForDropDown().then((resp) => {
-    services.value = resp.data?.map((s) => ({
-      code: s.id,
-      name: s.label,
-      price: s.value
+    serviceOption.value = resp.data?.map((s) => ({
+      key: s.id,
+      label: s.label,
+      children: s.services?.filter(x => !!x).map((x) => ({
+        type: 'service',
+        key: x.id,
+        label: x.label,
+        data: x.value
+      }))
     }))
-  })
 
-  await getStaffForDropDown().then((resp) => {
+    serviceOption.value.forEach(element => {
+      const currentServices = element?.children?.map(child => ({
+        code: child.key,
+        name: child.label,
+        price: child.data,
+      })) || [];
+      currentServices.forEach(item => services.value.push(item))
+    });
+    services.value = services.value.filter((service, index, self) => self.findIndex(s => s.code === service.code) === index)
+    expandedKeys.value = generateExpandedKeys(serviceOption.value);
+
+  })
+  const today = new Date();
+  const startOfDay = new Date(today.getFullYear(), today.getMonth(), today.getDate(), 0, 0, 0);
+  const endOfDay = new Date(today.getFullYear(), today.getMonth(), today.getDate(), 23, 59, 59);
+  await getStaffForDropDown(startOfDay.toISOString(), endOfDay.toISOString()).then((resp) => {
     staffs.value =
       resp.data
-        ?.filter((s) => s.value === AccountStatus.Free)
         .map((s) => ({
           code: s.id,
-          name: s.label
+          name: s.fullName + "___" + s.numberOrder
         })) || []
     if (
       reflectSelectedOrder.value.workerService != null &&
@@ -390,7 +448,6 @@ const OpenCreditDiscountTag = () => {
 
 const CheckOut = async () => {
   let workerService = getPaymentServiceWorker()
-  console.log(workerService)
   await updateOrderInfo(
     {
       id: reflectSelectedOrder.value.order.id,
@@ -410,6 +467,35 @@ const CheckOut = async () => {
     })
   })
 }
+
+const selectService = (selectedItem) => {
+  selectedWorkerService.value = selectedItem
+  const serviceDict = {};
+  selectedItem.services.forEach((x) => {
+    serviceDict[x.code] = {
+      checked: true,
+      partialChecked: false
+    };
+  });
+  selectedService.value = serviceDict;
+  isVisibleSelectService.value = true
+}
+
+async function autoAssignTask() {
+  await autoAssignOrderForStaff(masterData.userInfo.accountId)
+    .then(async () => {
+      await getDefaultOrders()
+      .then(() => {
+        showSuccessUpdateOrder()
+      })
+      .catch(() => {
+        showErrorCommonMessage('Error Message', 'Please reload order')
+      })
+    })
+    .catch(() => {
+      showErrorCommonMessage('Error Message', 'Can not auto assign order')
+    })
+}
 </script>
 
 <template>
@@ -423,6 +509,8 @@ const CheckOut = async () => {
           :page-numer="pageSize"
           :page-size="pageSize"
           :total-records="totalRecords"
+          @reload-orders="async () => await getDefaultOrders()"
+          @auto-assign="autoAssignTask"
           @change-paging="getPagingOrders"
           @edit-order="(order) => editOrder(order)"
         />
@@ -829,20 +917,43 @@ const CheckOut = async () => {
                 </FloatLabel>
               </template>
             </Column>
-            <Column field="type" header="Service" class="w-full sm:w-3/4">
+            <Column field="type" header="Service" class="w-full sm:w-4/5">
               <template #body="slotProps">
+                <Dialog v-model:visible="isVisibleSelectService" modal header="Services" class="w-full sm:w-1/2">
+                  <Tree v-model:selectionKeys="selectedService" 
+                        :value="serviceOption" 
+                        selectionMode="checkbox" 
+                        :expandedKeys="expandedKeys"
+                        class="w-full md:w-30rem">
+                     <template #default="slotProps">
+                        <p class="font-medium ">{{ slotProps.node.label }}</p>
+                    </template>
+                    <template #service="slotProps">
+                        <div class="flex flex-row">
+                        <span class="">{{ slotProps.node.label }}</span>
+                        <p class="ml-12 font-medium">{{ slotProps.node.data }} €</p>
+                        </div>
+                    </template>
+
+                  </Tree>
+                  <template #footer>
+                    <Button label="Save" @click="isVisibleSelectService = false" autofocus />
+                    </template>
+                </Dialog>
                 <FloatLabel class="w-full mt-3">
-                  <MultiSelect
+                    <MultiSelect
                     :disabled="disableEdit"
                     v-model="slotProps.data.services"
                     display="chip"
                     :options="services"
+                    @show="selectService(slotProps.data)"
                     dataKey="code"
                     id="over_label_service"
                     optionLabel="name"
                     class="w-full"
-                  >
-                  </MultiSelect>
+                    :show-clear="false"
+                    >
+                    </MultiSelect>
                   <label class="text-sm" for="over_label_service">Service</label>
                 </FloatLabel>
               </template>

@@ -119,7 +119,6 @@ async function queryCustomers() {
       return res.data.data
     })
     .catch((error) => {
-      console.log(error)
       showCommonErrorMessage('Error', 'Retry again')
     })
     .finally(() => {
@@ -229,7 +228,7 @@ const onRowCollapse = (event) => {
           <div class="flex items-center gap-4 mb-2">
             <label for="email" class="font-semibold w-24">Credit Point</label>
             <span class="flex-auto" style="font-size: 2rem">{{
-              selectedCustomer.creditPoints?.find(point => point.type === CreditPointType.Availabe)?.value
+              Array.isArray(selectedCustomer?.creditPoints) ? selectedCustomer.creditPoints.find(point => point.type === CreditPointType.Availabe)?.value : 0
             }}</span>
           </div>
         </div>
@@ -370,7 +369,9 @@ const onRowCollapse = (event) => {
                     class="sm:w-1/6 w-full text-left sm:text-center content-center font-bold text-lg"
                   >
                     <span class="inline sm:hidden">Credit Point:</span>
-                    <span class="ml-3 sm:m-0">{{ customer.creditPoints?.find(point => point.type === CreditPointType.Availabe)?.value }}</span>
+                    <span class="ml-3 sm:m-0">
+                      {{ Array.isArray(customer?.creditPoints) ? customer.creditPoints.find(point => point.type === CreditPointType.Availabe)?.value : 0 }}
+                    </span>
                   </div>
                   <span
                     style="word-break: break-word; white-space: normal"

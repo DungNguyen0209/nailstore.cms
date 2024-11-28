@@ -174,7 +174,7 @@ async function queryAccounts() {
     })
         .then((res) => {
             totalRecords.value = res.data.total
-            accounts.value = res.data.data
+                .value = new Account(res.data.data)
             return res.data.data
         })
         .catch((error) => {

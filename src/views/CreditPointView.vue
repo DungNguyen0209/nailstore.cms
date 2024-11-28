@@ -15,13 +15,12 @@ import BaseMasterData from '@/types/BaseMasterData'
 import { getSettingByName, updateSetting } from '@/api/settingApi'
 import InputNumber from 'primevue/inputnumber'
 import Button from 'primevue/button'
+import { getTierSetting } from '@/api/creditPoint'
 
 const masterData = useMasterDataStore()
 const confirm = useConfirm()
 const { showCommonErrorMessage, showCommonSuccessMessage } = useToastMessage()
-const creditPoint = ref(new BaseMasterData())
-const currentCreditPoint = ref(0)
-const expandedRows = ref(null)
+
 const isEditInVisible = computed(() => {
   return currentCreditPoint.value === creditPoint.value.value
 })
@@ -30,17 +29,12 @@ onMounted(async () => {
   await queryCreditPoint()
 })
 async function queryCreditPoint() {
-  masterData.setIsLoading(true)
-  await getSettingByName(SettingKey.CreditPoint)
+  await getTierSetting()
     .then((res) => {
-      creditPoint.value = res.data
-      currentCreditPoint.value = res.data.value
+      creditPoint.value.value = res.data?.value
     })
     .catch((error) => {
       showCommonErrorMessage('Error', 'Retry again')
-    })
-    .finally(() => {
-      masterData.setIsLoading(false)
     })
 }
 
@@ -87,41 +81,8 @@ async function updateCreditPoint() {
       <div class="flex justify-center items-center h-full">
         <div class="w-1/2">
           <Card style="overflow: hidden" class="w-full content-center">
-            <template #title>Setting Credit Point</template>
-            <template #subtitle>One Checkout = 1 point</template>
             <template #content>
-              <div class="flex w-1/2">
-                <InputGroup class="dark:bg-slate-800">
-                  <InputNumber
-                    v-model="creditPoint.value"
-                    placeholder="Price"
-                    class="dark:bg-slate-800 dark:text-white w-32"
-                    :minFractionDigits="2"
-                    :maxFractionDigits="4"
-                  />
-                </InputGroup>
-                <InputGroup class="dark:bg-slate-800">
-                  <InputGroupAddon class="dark:bg-slate-800 dark:text-white">€</InputGroupAddon>
-                  <InputNumber
-                    v-model="creditPoint.value"
-                    placeholder="Price"
-                    class="dark:bg-slate-800 dark:text-white w-32"
-                    :minFractionDigits="2"
-                    :maxFractionDigits="4"
-                  />
-                </InputGroup>
-              </div>
-            </template>
-            <template #footer>
-              <div class="flex gap-4 mt-1">
-                <Button label="Cancel" severity="secondary" outlined class="w-full" />
-                <Button
-                  :disabled="isEditInVisible"
-                  label="Save"
-                  @click="confirmSaveInformation"
-                  class="w-full"
-                />
-              </div>
+              
             </template>
           </Card>
         </div>

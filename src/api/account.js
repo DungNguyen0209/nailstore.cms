@@ -25,7 +25,6 @@ export async function updateAccount(account = new Account()) {
 }
 
 export async function deleteAccount(id) {
-  console.log('id', id)
   return await api.delete(`api/accounts/deleteById`, {
     params: { id: id }
   })
