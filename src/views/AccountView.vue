@@ -9,7 +9,7 @@ import ScrollPanel from 'primevue/scrollpanel'
 import Paginator from 'primevue/paginator'
 import { useConfirm } from 'primevue/useconfirm'
 import { mdiAccountGroup } from '@mdi/js'
-import { getAccountByFilter, updateAccount, deleteAccount } from '@/api/account'
+import { getAccountByFilter, updateAccount, deleteAccount, getStaffByFilter } from '@/api/account'
 import { createNewUser, updatePassword } from '@/api/userApi'
 import { Role } from '@/helpers/constants'
 import Account from '@/types/Account'
@@ -166,7 +166,7 @@ const onPageChange = async (event) => {
 
 async function queryAccounts() {
     masterData.setIsLoading(true)
-    accounts.value = await getAccountByFilter({
+    await getStaffByFilter({
         role: [Role.Staff, Role.Manager, Role.Cashier],
         pageSize: pageSize.value,
         pageNumber: pageNumber.value,
@@ -174,8 +174,7 @@ async function queryAccounts() {
     })
         .then((res) => {
             totalRecords.value = res.data.total
-                .value = new Account(res.data.data)
-            return res.data.data
+            accounts.value = res.data.data.map((a) => new Account(a))
         })
         .catch((error) => {
             console.log(error)
@@ -387,7 +386,7 @@ async function ChangeTab() {
                         <span class="w-2/6 text-center content-center">Address</span>
                     </div>
                 </div>
-                <ScrollPanel v-if="accounts.length > 0" style="width: 100%; height: 60vh" class="overflow-hidden">
+                <ScrollPanel style="width: 100%; height: 60vh" class="overflow-hidden">
                     <div v-for="account in accounts" v-bind:key="account.id">
                         <Card class="h-full mb-3 hover:shadow-lg hover:transition-all duration-500 cursor-pointer"
                             @click="() => selectAccount(account)">

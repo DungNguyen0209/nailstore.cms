@@ -1,3 +1,4 @@
+import { uuidv7 } from 'uuidv7'
 import api from './api'
 
 export async function createOrder({ isNewAccount, ownerId, account, createdBy, description }) {
@@ -73,4 +74,15 @@ export async function autoAssignOrderForStaff(id) {
   return await api.post(`api/orders/autoAssignOrder`, null, {
     params: { id: id }
   })
+}
+
+export async function getKpiOfStaff(staffId, startDate, endDate) {
+  return await api.get(`api/orders/kpi`, {
+    params: {
+      staffId: staffId,
+      fromDate: startDate,
+      toDate: endDate
+    }
+  })
+
 }

@@ -14,9 +14,13 @@ defineProps({
     type: String,
     required: true
   },
+  buttonIcon: {
+    type: String,
+    default: mdiCog
+  },
   main: Boolean
 })
-
+const emit = defineEmits(['toggleBaseButton']);
 const hasSlot = computed(() => useSlots().default)
 </script>
 
@@ -30,6 +34,6 @@ const hasSlot = computed(() => useSlots().default)
       </h1>
     </div>
     <slot v-if="hasSlot" />
-    <BaseButton v-else :icon="mdiCog" color="whiteDark" />
+    <BaseButton v-else :icon="buttonIcon" color="whiteDark" class="border-slate-400" @click="emit('toggleBaseButton')" />
   </section>
 </template>

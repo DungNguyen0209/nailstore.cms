@@ -4,10 +4,7 @@ class Order {
     constructor({
       id,
       note,
-      ownerPhone,
-      ownerId,
-      ownerName,
-      ownerEmail,
+      owner,
       status,
       createdBy,
       bill,
@@ -15,11 +12,18 @@ class Order {
     }) {
       this.id = id;
       this.note = note;
-      this.ownerPhone = ownerPhone;
-      this.ownerId = ownerId;
-      this.ownerName = ownerName;
-      this.ownerEmail = ownerEmail;
       this.status = status;
+      this.owner = owner == null ? null : {
+        id: owner.id,
+        fullName: owner.fullName,
+        email: owner.email,
+        phone: owner.phone,
+        address: owner.address,
+        role: owner.role,
+        tenant: owner.tenant,
+        tier: owner.tier,
+        creditPoints: owner.creditPoints,
+      }
       this.createdBy = createdBy;
       this.createdTime = new Date(createdTime).toLocaleString();
       this.Bill =bill == null ? null : new Bill({
@@ -40,4 +44,5 @@ class Order {
     }
   }
   
+  get
   export default Order;

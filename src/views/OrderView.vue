@@ -89,7 +89,7 @@ let val = 0
   if (reflectSelectedOrder.value != null) {
     val = reflectSelectedOrder.value.serviceWorker.reduce((acc, x) => acc + x.totalPrice, 0)
   }
-  return val
+  return val.toFixed(4)
 })
 
 const totalPrice = computed(() => {
@@ -106,14 +106,17 @@ const totalPrice = computed(() => {
 })
 
 const creditPoint = computed((previous) => {
-  if(reflectSelectedOrder?.value?.order != null){}
-  const availablePoint = reflectSelectedOrder?.value?.order?.creditPoint?.find(point => point.type === CreditPointType.Availabe)?.value ?? 0;
-  const requiredPoint = reflectSelectedOrder?.value?.order?.creditPointSetting?.requiredSpending ?? 1;
-  const price = reflectSelectedOrder?.value?.order?.creditPointSetting?.value ?? 0;
+  if(reflectSelectedOrder?.value?.order == null){
+    return 
+  }
+  const availablePoint = reflectSelectedOrder?.value?.order?.owner?.creditPoints?.find(point => point.type === CreditPointType.Availabe)?.value ?? 0;
+  const requiredPoint = reflectSelectedOrder?.value?.order?.creditPointSetting?.requiredPoints ?? 1;
+  const price = reflectSelectedOrder?.value?.order?.creditPointSetting?.price ?? 0;
   const usingPoint = Math.floor(parseInt(availablePoint) / parseInt(requiredPoint));
+  console.log("====", availablePoint, usingPoint, requiredPoint, price)
   return {
     availablePoint: availablePoint,
-    usingPoint: usingPoint,
+    usingPoint: usingPoint*requiredPoint,
     price: price,
     discount: (usingPoint*price).toFixed(4)
   };
@@ -122,7 +125,7 @@ const creditPoint = computed((previous) => {
 const creditPointBillDiscount = computed(() => {
   return {
     usingPoint: billInfo.value.creditPoint,
-    discount: (billInfo.value.creditPoint*billInfo.value.creditPointPrice).toFixed(4),
+    discount: billInfo.value.creditPointPrice.toFixed(4),
     isDiscount: billInfo.value.creditPoint > 0
   }
 })
@@ -459,7 +462,7 @@ const CheckOut = async () => {
       reflectSelectedOrder.value.order.id,
       parseFloat(totalPrice.value),
       creditPoint.value.usingPoint,
-      creditPoint.value.price,
+      creditPoint.value.discount,
       reflectSelectedOrder.value.note
     ).then(() => {
       
@@ -776,12 +779,12 @@ async function autoAssignTask() {
                   <div class="flex flex-col">
                     <div class="flex flex-row w-full ml-4 gap-4">
                       <span class="text-lg font-semibold">Full name:</span>
-                      <span class="text-gray-800 pt-0.5">{{ reflectSelectedOrder.order.ownerName }}</span>
+                      <span class="text-gray-800 pt-0.5">{{ reflectSelectedOrder.order.owner.fullName }}</span>
                     </div>
                     <div class="flex flex-row w-full ml-4 gap-4">
                       <i class="pi pi-phone content-center font-thin" style="font-size: 1rem"></i>
                       <span class="text-gray-800 pb-0.5 font-thin">{{
-                        reflectSelectedOrder.order.ownerPhone
+                        reflectSelectedOrder.order.owner.phone
                       }}</span>
                     </div>
                   </div>
@@ -790,7 +793,7 @@ async function autoAssignTask() {
                   <div class="flex flex-col w-full ml-4 gap-1">
                     <span>Gmail</span>
                     <span class="text-gray-800 font-thin">{{
-                      reflectSelectedOrder.order.ownerEmail
+                      reflectSelectedOrder.order.owner.email
                     }}</span>
                   </div>
                   <div class="flex flex-col w-full ml-4 gap-1">
@@ -861,16 +864,16 @@ async function autoAssignTask() {
         </div>
         <div class="gap-4" v-else>
           <div class="mb-4">
-            <span class="text-lg font-semibold">Họ và tên:</span>
-            <span class="ml-2 text-gray-800">{{ reflectSelectedOrder.order.ownerName }}</span>
+            <span class="text-lg font-semibold">Full Name:</span>
+            <span class="ml-2 text-gray-800">{{ reflectSelectedOrder.order.owner.fullName }}</span>
           </div>
           <div class="mb-4">
-            <span class="text-lg font-semibold">Số điện thoại:</span>
-            <span class="ml-2 text-gray-800">{{ reflectSelectedOrder.order.ownerPhone }}</span>
+            <span class="text-lg font-semibold">Phone:</span>
+            <span class="ml-2 text-gray-800">{{ reflectSelectedOrder.order.owner.phone }}</span>
           </div>
           <div class="mb-4">
             <span class="text-lg font-semibold">E-Mail:</span>
-            <span class="ml-2 text-gray-800">{{ reflectSelectedOrder.order.ownerEmail }}</span>
+            <span class="ml-2 text-gray-800">{{ reflectSelectedOrder.order.owner.email }}</span>
           </div>
           <div class="flex items-center mb-4">
             <span class="text-lg font-semibold">Trạng thái:</span>

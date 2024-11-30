@@ -36,3 +36,7 @@ export const CreditPointType = {
   Availabe: 'available',
   LifeSpan: 'life_span'
 }
+
+export const defaultTier = {
+  Basic : 'Basic'
+}

@@ -24,6 +24,7 @@ import { getBillOfAccount } from '@/api/billApi'
 import DataTable from 'primevue/datatable'
 import Column from 'primevue/column'
 import Chip from 'primevue/chip'
+import Tag from 'primevue/tag';
 
 const masterData = useMasterDataStore()
 const confirm = useConfirm()
@@ -347,10 +348,21 @@ const onRowCollapse = (event) => {
         >
           <div v-for="customer in customers" v-bind:key="customer.id">
             <Card
-              class="h-full mb-3 hover:shadow-lg hover:transition-all duration-500 cursor-pointer"
+              class="relative h-full mb-3 hover:shadow-lg hover:transition-all duration-500 cursor-pointer"
               @click="() => selectCustomer(customer)"
             >
-              <template #title>{{ customer.fullName }}</template>
+              <template #title>
+                <div class="absolute w-28 right-0 trans rotate-45 form translate-y--20 z-1000">
+                    <Tag
+                      :value="customer.tier.label" 
+                      :style="{ '--tag-bg-color': `#${customer.tier.value}` }"
+                      class="w-full custom-tag"
+                    />
+                </div>
+                <div class="h-full relative">
+                <span>{{ customer.fullName }}</span>
+                </div>
+              </template>
               <template #content>
                 <div class="flex sm:flex-row flex-col text-center gap-1">
                   <div class="flex flex-col w-2/6 gap-2">
@@ -406,6 +418,11 @@ const onRowCollapse = (event) => {
 </template>
 
 <style scoped>
+:deep(.custom-tag) {
+  background: var(--tag-bg-color) !important;
+  color: white   !important;
+}
+
 .thick-border {
   border-width: 1.5px;
   /* Adjust the value as needed */

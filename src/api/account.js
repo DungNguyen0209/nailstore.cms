@@ -10,6 +10,15 @@ export async function getAccountByFilter({ pageSize, pageNumber, role, keyword }
   })
 }
 
+export async function getStaffByFilter({ pageSize, pageNumber, role, keyword }) {
+  return await api.post('api/accounts/staff', {
+    pageSize: pageSize,
+    pageNumber: pageNumber,
+    type: role,
+    keyword: keyword
+  })
+}
+
 export async function updateAccount(account = new Account()) {
   return await api.put('api/accounts/update', {
     id: account.id,

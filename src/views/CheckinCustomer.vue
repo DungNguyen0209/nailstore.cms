@@ -62,7 +62,6 @@
         <span class="text-xl uppercase tracking-widest">LyLy Nails</span>
       </header>
 
-      <!-- Input fields with border-b style -->
       <div class="space-y-8 mb-8 ">
         <FloatLabel variant="in">
           <InputText fluid id="Fon_label" class="font-arial text-sm" v-model="account.fullName" />

@@ -7,6 +7,7 @@ import {
   mdiChartTimelineVariant,
 
 } from '@mdi/js'
+import { getKpiOfStaff } from '@/api/orderApi'
 import * as chartConfig from '@/components/Charts/chart.config.js'
 import SectionMain from '@/components/SectionMain.vue'
 import CardBoxWidget from '@/components/CardBoxWidget.vue'
@@ -18,13 +19,26 @@ import CardBoxComponentTitle from '@/components/CardBoxComponentTitle.vue'
 import CardBox from '@/components/CardBox.vue'
 import { useRouter } from 'vue-router'
 import { Card } from 'primevue'
-const chartData = ref(null)
+import { useMasterDataStore } from '@/stores/masterData'
 
+const {userInfo, setIsLoading} = useMasterDataStore()
+const totalOrder = ref(0)
+const totalPrice = ref(0)
+const chartData = ref(null)
 const fillChartData = () => {
   chartData.value = chartConfig.sampleChartData()
 }
 
-onMounted(() => {
+onMounted(async() => {
+  setIsLoading(true)
+  const today = new Date();
+  const startOfDay = new Date(today.getFullYear(), today.getMonth(), today.getDate(), 0, 0, 0);
+  const endOfDay = new Date(today.getFullYear(), today.getMonth(), today.getDate(), 23, 59, 59);
+  await getKpiOfStaff(userInfo.accountId,startOfDay, endOfDay).then((res) => {
+    totalOrder.value = res.data.total0rder
+    totalPrice.value = res.data.totalPrice
+  })
+  setIsLoading(false)
   fillChartData()
 })
 
@@ -45,10 +59,10 @@ const checkin = async () => {
       </SectionTitleLineWithButton>
 
       <div class="grid grid-cols-1 gap-6 lg:grid-cols-3 mb-6">
-        <CardBoxWidget trend="12%" trend-type="up" color="text-emerald-500" :icon="mdiAccountMultiple" :number="512"
+        <CardBoxWidget trend="12%" trend-type="up" color="text-emerald-500" :icon="mdiAccountMultiple" :number="totalOrder"
           label="Clients" />
-        <CardBoxWidget trend="12%" trend-type="down" color="text-blue-500" :icon="mdiCartOutline" :number="7770"
-          prefix="$" label="Sales" />
+        <CardBoxWidget trend="12%" trend-type="down" color="text-blue-500" :icon="mdiCartOutline" :number="totalPrice"
+          prefix="€" label="Sales" />
         <CardBoxWidget trend="Overflow" trend-type="alert" color="text-red-500" :icon="mdiChartTimelineVariant"
           :number="256" suffix="%" label="Performance" />
       </div>
