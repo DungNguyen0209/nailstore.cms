@@ -30,7 +30,7 @@ const masterData = useMasterDataStore()
 const confirm = useConfirm()
 const customers = ref([new Account()])
 const pageSize = ref(10)
-const pageNumber = ref(10)
+const pageNumber = ref(1)
 const totalRecords = ref(0)
 const keyWord = ref('')
 const { showCommonErrorMessage, showCommonSuccessMessage } = useToastMessage()
@@ -348,17 +348,17 @@ const onRowCollapse = (event) => {
         >
           <div v-for="customer in customers" v-bind:key="customer.id">
             <Card
-              class="relative h-full mb-3 hover:shadow-lg hover:transition-all duration-500 cursor-pointer"
+              class="relative overflow-hidden h-full mb-3 hover:shadow-lg hover:transition-all duration-500 cursor-pointer"
               @click="() => selectCustomer(customer)"
             >
               <template #title>
-                <div class="absolute w-24 right-0 trans rotate-45 form translate-y--20 z-1000">
-                    <Tag
-                      :value="customer.tier.label" 
-                      :style="{ '--tag-bg-color': `#${customer.tier.value}` }"
-                      class="w-full custom-tag"
-                    />
-                </div>
+              <Tag
+                :value="customer?.tier?.label" 
+                :style="{ '--tag-bg-color': `#${customer?.tier?.value}`,
+                    '--p-tag-font-weight': 400,
+                    }"
+                class="absolute transform rotate-45 custom-tag text-center font-light !important py-1 right-[-40px] top-[18px] w-[170px]">
+                </Tag>
                 <div class="h-full relative">
                 <span>{{ customer.fullName }}</span>
                 </div>
@@ -406,11 +406,15 @@ const onRowCollapse = (event) => {
           </div>
         </ScrollPanel>
         <Paginator
+            :template="{
+                '640px': 'PrevPageLink CurrentPageReport NextPageLink',
+                '960px': 'FirstPageLink PrevPageLink CurrentPageReport NextPageLink LastPageLink',
+                '1300px': 'FirstPageLink PrevPageLink PageLinks NextPageLink LastPageLink',
+                default: 'FirstPageLink PrevPageLink PageLinks NextPageLink LastPageLink JumpToPageDropdown JumpToPageInput'
+            }"
           @page="onPageChange"
-          :rows="pageNumber"
-          :totalRecords="totalRecords"
-          :rowsPerPageOptions="[10, 50, 100]"
-        >
+          :rows="pageSize"
+          :totalRecords="totalRecords">
         </Paginator>
       </div>
     </SectionMain>

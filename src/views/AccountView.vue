@@ -35,7 +35,7 @@ import { mdiGithub } from '@mdi/js'
 const masterData = useMasterDataStore()
 const accounts = ref([new Account()])
 const pageSize = ref(10)
-const pageNumber = ref(10)
+const pageNumber = ref(1)
 const totalRecords = ref(0)
 const keyWord = ref('')
 const { showCommonErrorMessage, showCommonSuccessMessage } = useToastMessage()
@@ -428,8 +428,16 @@ async function ChangeTab() {
                         </Card>
                     </div>
                 </ScrollPanel>
-                <Paginator @page="onPageChange" :rows="pageNumber" :totalRecords="totalRecords"
-                    :rowsPerPageOptions="[10, 50, 100]">
+                <Paginator
+                    :template="{
+                        '640px': 'PrevPageLink CurrentPageReport NextPageLink',
+                        '960px': 'FirstPageLink PrevPageLink CurrentPageReport NextPageLink LastPageLink',
+                        '1300px': 'FirstPageLink PrevPageLink PageLinks NextPageLink LastPageLink',
+                        default: 'FirstPageLink PrevPageLink PageLinks NextPageLink LastPageLink JumpToPageDropdown JumpToPageInput'
+                    }"
+                    :rows="pageSize"
+                    @page="onPageChange"
+                    :totalRecords="totalRecords">
                 </Paginator>
             </div>
         </SectionMain>
