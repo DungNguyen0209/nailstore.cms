@@ -44,5 +44,4 @@ class Order {
     }
   }
   
-  get
   export default Order;

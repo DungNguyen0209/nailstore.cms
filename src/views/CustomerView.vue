@@ -352,7 +352,7 @@ const onRowCollapse = (event) => {
               @click="() => selectCustomer(customer)"
             >
               <template #title>
-                <div class="absolute w-28 right-0 trans rotate-45 form translate-y--20 z-1000">
+                <div class="absolute w-24 right-0 trans rotate-45 form translate-y--20 z-1000">
                     <Tag
                       :value="customer.tier.label" 
                       :style="{ '--tag-bg-color': `#${customer.tier.value}` }"
