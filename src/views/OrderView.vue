@@ -21,13 +21,8 @@ import {
   DataView,
   ScrollPanel,
   Textarea,
-  IftaLabel,
   Checkbox,
-  Chip
 } from 'primevue'
-import { convertTZ } from '@/helpers/time'
-import { config } from '@/helpers/config'
-import { onlyUnique } from '@/helpers/array'
 import { getOrderSeverity } from '@/helpers/order'
 import { getStaffForDropDown } from '@/api/userApi'
 import { getServiceForDropDown } from '@/api/serviceApi'
@@ -42,7 +37,6 @@ import {
   autoAssignOrderForStaff
 } from '@/api/orderApi'
 import { useConfirm } from 'primevue/useconfirm'
-import { AccountStatus } from '@/helpers/constants'
 import { mdiInvoice } from '@mdi/js'
 import Drawer from 'primevue/drawer'
 import InputNumber from 'primevue/inputnumber'
@@ -53,7 +47,7 @@ import Tree from 'primevue/tree';
 import Dialog from 'primevue/dialog';
 
 const confirm = useConfirm()
-const { showErrorCommonMessage, showSuccessUpdateOrder } = useToastMessage()
+const { showCommonErrorMessage, showSuccessUpdateOrder } = useToastMessage()
 const orders = ref([new Order({})])
 const pageSize = ref(10)
 const currentPage = ref(1)
@@ -64,7 +58,7 @@ const reflectSelectedOrder = ref(null)
 const billInfo = ref(null)
 const services = ref([])
 const serviceOption = ref(null)
-const selectedService = ref(null) 
+const selectedService = ref(new Set()) 
 const staffs = ref(null)
 const selectedWorkerService = ref(null)
 const expandedKeys = ref({});
@@ -113,7 +107,6 @@ const creditPoint = computed((previous) => {
   const requiredPoint = reflectSelectedOrder?.value?.order?.creditPointSetting?.requiredPoints ?? 1;
   const price = reflectSelectedOrder?.value?.order?.creditPointSetting?.price ?? 0;
   const usingPoint = Math.floor(parseInt(availablePoint) / parseInt(requiredPoint));
-  console.log("====", availablePoint, usingPoint, requiredPoint, price)
   return {
     availablePoint: availablePoint,
     usingPoint: usingPoint*requiredPoint,
@@ -133,10 +126,10 @@ const creditPointBillDiscount = computed(() => {
 watch(
   selectedService,
   (newValue) => {
-    if (newValue != null) {
+    if (newValue != null && !!services.value.length) {
       selectedWorkerService.value.services = services.value?.filter(
         (x) => {
-         return x.code in newValue 
+         return newValue.has(x.code)
         }
       );
     }
@@ -147,7 +140,6 @@ const acceptDiscount = ref(false)
 
 const masterData = useMasterDataStore()
 
-const paymentNote = ref('')
 
 /// Validation
 const schema = yup.object({
@@ -162,7 +154,6 @@ const { defineField, handleSubmit, resetForm, errors, validate } = useForm({
   validationSchema: schema
 })
 
-const [price] = defineField('price')
 
 const isVisibleSelectService = ref(false)
 onMounted(async () => {
@@ -181,7 +172,7 @@ const getDefaultOrders = async () => {
       orders.value = response.data?.orders?.map((orderData) => new Order(orderData))
     })
     .catch(() => {
-      showErrorCommonMessage('Error Message', 'Can not get orders')
+      showCommonErrorMessage('Error Message', 'Can not get orders')
     })
 }
 
@@ -199,7 +190,7 @@ const editOrder = async (order) => {
         visibleEdit.value = true
       })
       .catch(() => {
-        showErrorCommonMessage('Error Message', 'Can not get payment detail')
+        showCommonErrorMessage('Error Message', 'Can not get payment detail')
       })
     return
   }
@@ -212,11 +203,13 @@ const editOrder = async (order) => {
     serviceOption.value = resp.data?.map((s) => ({
       key: s.id,
       label: s.label,
+      checked: false,
       children: s.services?.filter(x => !!x).map((x) => ({
         type: 'service',
         key: x.id,
         label: x.label,
-        data: x.value
+        data: x.value,
+        checked: false,
       }))
     }))
 
@@ -287,7 +280,7 @@ async function getOrderInformation(id){
       }
     })
     .catch(() => {
-      showErrorCommonMessage('Error Message', 'Can not get detail order')
+      showCommonErrorMessage('Error Message', 'Can not get detail order')
     })
 }
 
@@ -298,7 +291,7 @@ async function getBillInformation(id) {
   })
   .catch(() => {
     visibleEdit.value = false
-    showErrorCommonMessage('Error Message', 'Can not get payment detail')
+    showCommonErrorMessage('Error Message', 'Can not get payment detail')
   })
 }
 
@@ -309,7 +302,7 @@ async function getPagingOrders(params) {
       orders.value = response.data?.orders?.map((orderData) => new Order(orderData))
     })
     .catch(() => {
-      showErrorCommonMessage('Error Message', 'Can not get orders')
+      showCommonErrorMessage('Error Message', 'Can not get orders')
     })
 }
 
@@ -363,7 +356,7 @@ async function UpdateOrderDetailStatus() {
       showSuccessUpdateOrder()
     })
     .catch(() => {
-      showErrorCommonMessage('Error Message', 'Can not update order')
+      showCommonErrorMessage('Error Message', 'Can not update order')
     })
 }
 
@@ -385,7 +378,7 @@ async function saveOrderInformation() {
       showSuccessUpdateOrder()
     })
     .catch(() => {
-      showErrorCommonMessage('Error Message', 'Can not update order')
+      showCommonErrorMessage('Error Message', 'Can not update order')
     })
 }
 
@@ -401,7 +394,7 @@ async function updatePaymentOrder() {
       showSuccessUpdateOrder()
     })
     .catch(() => {
-      showErrorCommonMessage('Error Message', 'Can not update order')
+      showCommonErrorMessage('Error Message', 'Can not update order')
     })
 }
 
@@ -471,17 +464,31 @@ const CheckOut = async () => {
   })
 }
 
-const selectService = (selectedItem) => {
+function checkServiceOption(option, selectedServices) {
+  if (option.children && option.children.length > 0) {
+    option.children.forEach(child => checkServiceOption(child, selectedServices));
+  }
+  option.checked = selectedServices.some(s => s.code === option.key);
+}
+
+const selectService = async (selectedItem) => {
+  masterData.setIsLoading(true)
   selectedWorkerService.value = selectedItem
-  const serviceDict = {};
-  selectedItem.services.forEach((x) => {
-    serviceDict[x.code] = {
-      checked: true,
-      partialChecked: false
-    };
+  serviceOption.value.forEach(option => {
+    checkServiceOption(option, selectedWorkerService.value.services || []);
   });
-  selectedService.value = serviceDict;
+
+  masterData.setIsLoading(false)
   isVisibleSelectService.value = true
+}
+
+function checkItem(node){
+  if (node.type === 'service' && node.checked) {
+    selectedService.value.add(node.key)
+  }
+  if (node.type === 'service' && !node.checked) {
+    selectedService.value.delete(node.key)
+  }
 }
 
 async function autoAssignTask() {
@@ -492,11 +499,11 @@ async function autoAssignTask() {
         showSuccessUpdateOrder()
       })
       .catch(() => {
-        showErrorCommonMessage('Error Message', 'Please reload order')
+        showCommonErrorMessage('Error Message', 'Please reload order')
       })
     })
     .catch(() => {
-      showErrorCommonMessage('Error Message', 'Can not auto assign order')
+      showCommonErrorMessage('Error Message', 'Can not auto assign order')
     })
 }
 </script>
@@ -923,18 +930,19 @@ async function autoAssignTask() {
             <Column field="type" header="Service" class="w-full sm:w-4/5">
               <template #body="slotProps">
                 <Dialog v-model:visible="isVisibleSelectService" modal header="Services" class="w-full sm:w-1/2">
-                  <Tree v-model:selectionKeys="selectedService" 
+                  <Tree
                         :value="serviceOption" 
-                        selectionMode="checkbox" 
+                        selectionMode="single" 
                         :expandedKeys="expandedKeys"
                         class="w-full md:w-30rem">
-                     <template #default="slotProps">
+                    <template #default="slotProps">
                         <p class="font-medium ">{{ slotProps.node.label }}</p>
                     </template>
                     <template #service="slotProps">
-                        <div class="flex flex-row">
-                        <span class="">{{ slotProps.node.label }}</span>
-                        <p class="ml-12 font-medium">{{ slotProps.node.data }} €</p>
+                        <div class="flex flex-row w-full">
+                          <Checkbox class="w-1/6" v-model:model-value="slotProps.node.checked" @change="checkItem(slotProps.node)" binary />
+                          <span class="w-4/6 ml-1 font-light">{{ slotProps.node.label }}</span>
+                          <p class="w-1/6 ml-12 font-medium">{{ slotProps.node.data }} €</p>
                         </div>
                     </template>
 
@@ -994,6 +1002,9 @@ async function autoAssignTask() {
 </template>
 
 <style scoped>
+::v-deep .p-tree-node-label {
+  width: 100%;
+}
 .thick-border {
   border-width: 1.5px;
   /* Adjust the value as needed */
