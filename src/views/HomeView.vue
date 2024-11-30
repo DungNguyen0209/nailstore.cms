@@ -36,7 +36,7 @@ onMounted(async() => {
   const endOfDay = new Date(today.getFullYear(), today.getMonth(), today.getDate(), 23, 59, 59);
   await getKpiOfStaff(userInfo.accountId,startOfDay, endOfDay).then((res) => {
     totalOrder.value = res.data.total0rder
-    totalPrice.value = parseFloat(res.data.totalPrice).ToFixed(4)
+    totalPrice.value = parseFloat(res.data.totalPrice ?? 0).toFixed(4)
   })
   setIsLoading(false)
   fillChartData()
