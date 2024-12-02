@@ -1,140 +1,123 @@
 <script setup>
-import SectionMain from '@/components/SectionMain.vue'
-import LayoutAuthenticated from '@/layouts/LayoutAuthenticated.vue'
-import { onMounted, ref, watch } from 'vue'
-import { useMasterDataStore } from '@/stores/masterData'
-import { useToastMessage } from '@/composables/useToast'
-import Card from 'primevue/card'
-import ScrollPanel from 'primevue/scrollpanel'
-import Paginator from 'primevue/paginator'
-import { useConfirm } from 'primevue/useconfirm'
-import { mdiAccountGroup } from '@mdi/js'
-import { getAccountByFilter, updateAccount, deleteAccount } from '@/api/account'
-import { CreditPointType } from '@/helpers/constants'
-import { Role } from '@/helpers/constants'
-import Account from '@/types/Account'
-import Button from 'primevue/button'
-import Dialog from 'primevue/dialog'
-import Textarea from 'primevue/textarea'
-import InputText from 'primevue/inputtext'
-import SelectButton from 'primevue/selectbutton'
-import ConfirmPopup from 'primevue/confirmpopup'
-import Bill from '@/types/Bill'
-import { getBillOfAccount } from '@/api/billApi'
-import DataTable from 'primevue/datatable'
-import Column from 'primevue/column'
-import Chip from 'primevue/chip'
-import Tag from 'primevue/tag';
+  import SectionMain from '@/components/SectionMain.vue'
+  import LayoutAuthenticated from '@/layouts/LayoutAuthenticated.vue'
+  import { onMounted, ref, watch } from 'vue'
+  import { useMasterDataStore } from '@/stores/masterData'
+  import { useToastMessage } from '@/composables/useToast'
+  import Card from 'primevue/card'
+  import ScrollPanel from 'primevue/scrollpanel'
+  import Paginator from 'primevue/paginator'
+  import { useConfirm } from 'primevue/useconfirm'
+  import { mdiAccountGroup } from '@mdi/js'
+  import { getAccountByFilter, updateAccount, deleteAccount } from '@/api/account'
+  import { CreditPointType } from '@/helpers/constants'
+  import { Role } from '@/helpers/constants'
+  import Account from '@/types/Account'
+  import Button from 'primevue/button'
+  import Dialog from 'primevue/dialog'
+  import Textarea from 'primevue/textarea'
+  import InputText from 'primevue/inputtext'
+  import SelectButton from 'primevue/selectbutton'
+  import ConfirmPopup from 'primevue/confirmpopup'
+  import Bill from '@/types/Bill'
+  import { getBillOfAccount } from '@/api/billApi'
+  import DataTable from 'primevue/datatable'
+  import Column from 'primevue/column'
+  import Chip from 'primevue/chip'
+  import Tag from 'primevue/tag'
 
-const masterData = useMasterDataStore()
-const confirm = useConfirm()
-const customers = ref([new Account()])
-const pageSize = ref(10)
-const pageNumber = ref(1)
-const totalRecords = ref(0)
-const keyWord = ref('')
-const { showCommonErrorMessage, showCommonSuccessMessage } = useToastMessage()
-const selectedCustomer = ref(new Account())
-const detailInformation = ref(false)
-const options = ref([
-  { name: 'Information', value: 1 },
-  { name: 'History', value: 2 },
-  { name: 'Group', value: 3 }
-])
-const selectedTab = ref(1)
-const isEditVisible = ref(false)
-const bills = ref({
-  data: [],
-  totalPrice: 0
-})
-
-const expandedRows = ref(null)
-onMounted(async () => {
-  masterData.setIsLoading(true)
-  await queryCustomers()
-})
-
-async function updateAccountDetail() {
-  masterData.setComponentLoading(true)
-  await updateAccount(selectedCustomer.value)
-    .then((res) => {
-      showCommonSuccessMessage('Success', 'Update account successfully')
-    })
-    .catch((error) => {
-      showCommonErrorMessage('Error', 'Retry again')
-    })
-    .finally(() => {
-      masterData.setComponentLoading()
-    })
-}
-
-function selectCustomer(customer) {
-  selectedCustomer.value = customer
-  detailInformation.value = true
-}
-
-const confirmDeleteAccount = async () => {
-  await deleteAccount(selectedCustomer.value.id)
-    .then((res) => {
-      customers.value = customers.value.filter((s) => s.id != selectedCustomer.value.id)
-      refresh()
-      showCommonSuccessMessage('Success', 'Delete account successfully')
-      isEditVisible.value = false
-    })
-    .catch((error) => {
-      showCommonErrorMessage('Error', 'Retry again')
-    })
-}
-
-function refresh() {
-  selectedTab.value = 1
-  bills.value = {
+  const masterData = useMasterDataStore()
+  const confirm = useConfirm()
+  const customers = ref([new Account()])
+  const pageSize = ref(10)
+  const pageNumber = ref(1)
+  const totalRecords = ref(0)
+  const keyWord = ref('')
+  const { showCommonErrorMessage, showCommonSuccessMessage } = useToastMessage()
+  const selectedCustomer = ref(new Account())
+  const detailInformation = ref(false)
+  const options = ref([
+    { name: 'Information', value: 1 },
+    { name: 'History', value: 2 },
+    { name: 'Group', value: 3 }
+  ])
+  const selectedTab = ref(1)
+  const isEditVisible = ref(false)
+  const bills = ref({
     data: [],
-    historyDetail: [],
     totalPrice: 0
-  }
-  selectedCustomer.value = new Account()
-}
-
-const openDeleteConfirm = (customer) => {
-  selectedCustomer.value = customer
-  isEditVisible.value = true
-}
-
-const onPageChange = async (event) => {
-  pageNumber.value = event.page + 1
-  await queryCustomers()
-}
-
-async function queryCustomers() {
-  masterData.setIsLoading(true)
-  customers.value = await getAccountByFilter({
-    role: [Role.Guest],
-    pageSize: pageSize.value,
-    pageNumber: pageNumber.value,
-    keyWord: keyWord.value
   })
-    .then((res) => {
-      totalRecords.value = res.data.total
-      customers.value = res.data.data
-      return res.data.data
-    })
-    .catch((error) => {
-      showCommonErrorMessage('Error', 'Retry again')
-    })
-    .finally(() => {
-      masterData.setIsLoading()
-    })
-}
 
-async function ChangeTab() {
-  if (selectedTab.value === 2 && bills.value.data.length === 0) {
+  const expandedRows = ref(null)
+  onMounted(async () => {
     masterData.setIsLoading(true)
-    await getBillOfAccount(selectedCustomer.value.id)
+    await queryCustomers()
+  })
+
+  async function updateAccountDetail() {
+    masterData.setComponentLoading(true)
+    await updateAccount(selectedCustomer.value)
       .then((res) => {
-        bills.value.totalPrice = res.data.totalPrice
-        bills.value.data = res.data.data.map((b) => new Bill(b))
-        expandedRows.value = bills.value.data.reduce((acc, p) => (acc[p.id] = false) && acc, {})
+        showCommonSuccessMessage('Success', 'Update account successfully')
+      })
+      .catch((error) => {
+        showCommonErrorMessage('Error', 'Retry again')
+      })
+      .finally(() => {
+        masterData.setComponentLoading()
+      })
+  }
+
+  function selectCustomer(customer) {
+    selectedCustomer.value = customer
+    detailInformation.value = true
+  }
+
+  const confirmDeleteAccount = async () => {
+    await deleteAccount(selectedCustomer.value.id)
+      .then((res) => {
+        customers.value = customers.value.filter((s) => s.id != selectedCustomer.value.id)
+        refresh()
+        showCommonSuccessMessage('Success', 'Delete account successfully')
+        isEditVisible.value = false
+      })
+      .catch((error) => {
+        showCommonErrorMessage('Error', 'Retry again')
+      })
+  }
+
+  function refresh() {
+    selectedTab.value = 1
+    bills.value = {
+      data: [],
+      historyDetail: [],
+      totalPrice: 0
+    }
+    selectedCustomer.value = new Account()
+  }
+
+  const openDeleteConfirm = (customer) => {
+    selectedCustomer.value = customer
+    isEditVisible.value = true
+  }
+
+  const onPageChange = async (event) => {
+    pageNumber.value = event.page + 1
+    await queryCustomers()
+  }
+
+  async function queryCustomers() {
+    masterData.setIsLoading(true)
+    customers.value = await getAccountByFilter({
+      role: [Role.Guest],
+      pageSize: pageSize.value,
+      pageNumber: pageNumber.value,
+      keyWord: keyWord.value
+    })
+      .then((res) => {
+        totalRecords.value = res.data.total
+        customers.value = res.data.data
+        return res.data.data
       })
       .catch((error) => {
         showCommonErrorMessage('Error', 'Retry again')
@@ -143,16 +126,36 @@ async function ChangeTab() {
         masterData.setIsLoading()
       })
   }
-}
 
-// Event handlers for row expand and collapse
-const onRowExpand = (event) => {
-  expandedRows.value[event.data.id] = true
-}
+  async function ChangeTab() {
+    if (selectedTab.value === 2 && bills.value.data.length === 0) {
+      masterData.setIsLoading(true)
+      await getBillOfAccount(selectedCustomer.value.id)
+        .then((res) => {
+          bills.value.totalPrice = res.data.totalPrice
+          bills.value.data = res.data.data.map((b) => new Bill(b))
+          expandedRows.value = bills.value.data.reduce((acc, p) => {
+            acc[p.id] = false
+            return acc
+          }, {})
+        })
+        .catch((error) => {
+          showCommonErrorMessage('Error', 'Retry again')
+        })
+        .finally(() => {
+          masterData.setIsLoading()
+        })
+    }
+  }
 
-const onRowCollapse = (event) => {
-  delete expandedRows.value[event.data.id]
-}
+  // Event handlers for row expand and collapse
+  const onRowExpand = (event) => {
+    expandedRows.value[event.data.id] = true
+  }
+
+  const onRowCollapse = (event) => {
+    delete expandedRows.value[event.data.id]
+  }
 </script>
 
 <template>
@@ -229,7 +232,11 @@ const onRowCollapse = (event) => {
           <div class="flex items-center gap-4 mb-2">
             <label for="email" class="font-semibold w-24">Credit Point</label>
             <span class="flex-auto" style="font-size: 2rem">{{
-              Array.isArray(selectedCustomer?.creditPoints) ? selectedCustomer.creditPoints.find(point => point.type === CreditPointType.Availabe)?.value : 0
+              Array.isArray(selectedCustomer?.creditPoints)
+                ? selectedCustomer.creditPoints.find(
+                    (point) => point.type === CreditPointType.Availabe
+                  )?.value
+                : 0
             }}</span>
           </div>
         </div>
@@ -268,29 +275,31 @@ const onRowCollapse = (event) => {
               <template #expansion="slotProps">
                 <div class="p-4">
                   <DataTable :value="slotProps.data.serviceWorker" headerClass="bg-primary">
-                    <Column field="service" header="Service" class="w-1/5">
+                    <Column field="service" header="Service">
                       <template #body="slotProps">
-                        {{ slotProps.data.service.name }}
-                      </template>
-                    </Column>
-                    <Column field="workers" header="Worker" class="w-3.5/5">
-                      <template #body="slotProps">
-                        <div class="flex flex-wrap gap-1">
-                          <Chip
-                            v-for="item in slotProps.data.workers"
-                            :key="item.id"
-                            :label="item.fullName"
-                          />
+                        <div class="inline-block">
+                          <article class="ml-1 text-wrap">
+                            <p class="break-words font-light">
+                              {{ slotProps.data.service?.name }}
+                            </p>
+                          </article>
                         </div>
                       </template>
                     </Column>
-                    <Column field="amount" header="Amount" class="w-0.5/5">
+                    <Column field="workers" header="Worker" class="w-2/5">
+                      <template #body="slotProps">
+                        <div class="flex flex-wrap gap-1">
+                          <Tag severity="success" :value="slotProps.data.worker?.fullName" />
+                        </div>
+                      </template>
+                    </Column>
+                    <Column field="amount" header="Amount" class="w-1/5">
                       <template #body="slotProps">
                         <IconField>
                           <InputIcon>
                             <i class="pi pi-euro" />
                           </InputIcon>
-                          <span class="ml-1"> {{ slotProps.data.price }}</span>
+                          <span class="ml-1"> {{ slotProps.data.totalPrice }}</span>
                         </IconField>
                       </template>
                     </Column>
@@ -352,15 +361,17 @@ const onRowCollapse = (event) => {
               @click="() => selectCustomer(customer)"
             >
               <template #title>
-              <Tag
-                :value="customer?.tier?.label" 
-                :style="{ '--tag-bg-color': `#${customer?.tier?.value}`,
-                    '--p-tag-font-weight': 400,
-                    }"
-                class="absolute transform rotate-45 custom-tag text-center font-light !important py-1 right-[-40px] top-[18px] w-[170px]">
+                <Tag
+                  :value="customer?.tier?.label"
+                  :style="{
+                    '--tag-bg-color': `#${customer?.tier?.value}`,
+                    '--p-tag-font-weight': 400
+                  }"
+                  class="absolute transform rotate-45 custom-tag text-center font-light !important py-1 right-[-40px] top-[18px] w-[170px]"
+                >
                 </Tag>
                 <div class="h-full relative">
-                <span>{{ customer.fullName }}</span>
+                  <span>{{ customer.fullName }}</span>
                 </div>
               </template>
               <template #content>
@@ -382,7 +393,13 @@ const onRowCollapse = (event) => {
                   >
                     <span class="inline sm:hidden">Credit Point:</span>
                     <span class="ml-3 sm:m-0">
-                      {{ Array.isArray(customer?.creditPoints) ? customer.creditPoints.find(point => point.type === CreditPointType.Availabe)?.value : 0 }}
+                      {{
+                        Array.isArray(customer?.creditPoints)
+                          ? customer.creditPoints.find(
+                              (point) => point.type === CreditPointType.Availabe
+                            )?.value
+                          : 0
+                      }}
                     </span>
                   </div>
                   <span
@@ -406,15 +423,17 @@ const onRowCollapse = (event) => {
           </div>
         </ScrollPanel>
         <Paginator
-            :template="{
-                '640px': 'PrevPageLink CurrentPageReport NextPageLink',
-                '960px': 'FirstPageLink PrevPageLink CurrentPageReport NextPageLink LastPageLink',
-                '1300px': 'FirstPageLink PrevPageLink PageLinks NextPageLink LastPageLink',
-                default: 'FirstPageLink PrevPageLink PageLinks NextPageLink LastPageLink JumpToPageDropdown JumpToPageInput'
-            }"
+          :template="{
+            '640px': 'PrevPageLink CurrentPageReport NextPageLink',
+            '960px': 'FirstPageLink PrevPageLink CurrentPageReport NextPageLink LastPageLink',
+            '1300px': 'FirstPageLink PrevPageLink PageLinks NextPageLink LastPageLink',
+            default:
+              'FirstPageLink PrevPageLink PageLinks NextPageLink LastPageLink JumpToPageDropdown JumpToPageInput'
+          }"
           @page="onPageChange"
           :rows="pageSize"
-          :totalRecords="totalRecords">
+          :totalRecords="totalRecords"
+        >
         </Paginator>
       </div>
     </SectionMain>
@@ -422,71 +441,71 @@ const onRowCollapse = (event) => {
 </template>
 
 <style scoped>
-:deep(.custom-tag) {
-  background: var(--tag-bg-color) !important;
-  color: white   !important;
-}
+  :deep(.custom-tag) {
+    background: var(--tag-bg-color) !important;
+    color: white !important;
+  }
 
-.thick-border {
-  border-width: 1.5px;
-  /* Adjust the value as needed */
-}
+  .thick-border {
+    border-width: 1.5px;
+    /* Adjust the value as needed */
+  }
 
-:deep(.custom-datatable > .p-datatable-table-container > .p-datatable-table > .p-datatable-thead),
-:deep(
-    .custom-datatable
-      > .p-datatable-table-container
-      > .p-virtualscroller
-      > .p-datatable-table
-      > .p-datatable-thead
-  ) {
-  display: table-header-group !important;
-  background: var(--p-datatable-header-cell-background) !important;
-}
+  :deep(.custom-datatable > .p-datatable-table-container > .p-datatable-table > .p-datatable-thead),
+  :deep(
+      .custom-datatable
+        > .p-datatable-table-container
+        > .p-virtualscroller
+        > .p-datatable-table
+        > .p-datatable-thead
+    ) {
+    display: table-header-group !important;
+    background: var(--p-datatable-header-cell-background) !important;
+  }
 
-:deep(
-    .custom-datatable
-      .p-datatable-scrollable
-      > .p-datatable-table-container
-      > .p-datatable-table
-      > .p-datatable-tbody
-  ) {
-  display: table-row-group !important;
-}
+  :deep(
+      .custom-datatable
+        .p-datatable-scrollable
+        > .p-datatable-table-container
+        > .p-datatable-table
+        > .p-datatable-tbody
+    ) {
+    display: table-row-group !important;
+  }
 
-:deep(
-    .custom-datatable
-      .p-datatable-table-container
-      table.p-datatable-table.p-datatable-scrollable-table
-      thead.p-datatable-thead
-      tr
-  ),
-:deep(
-    .custom-datatable
-      .p-datatable-table-container
-      table.p-datatable-table.p-datatable-scrollable-table
-      tbody.p-datatable-tbody
-      tr
-  ) {
-  display: table-row !important;
-  border-bottom-width: 1px !important;
-  /* Adjust as needed */
-}
+  :deep(
+      .custom-datatable
+        .p-datatable-table-container
+        table.p-datatable-table.p-datatable-scrollable-table
+        thead.p-datatable-thead
+        tr
+    ),
+  :deep(
+      .custom-datatable
+        .p-datatable-table-container
+        table.p-datatable-table.p-datatable-scrollable-table
+        tbody.p-datatable-tbody
+        tr
+    ) {
+    display: table-row !important;
+    border-bottom-width: 1px !important;
+    /* Adjust as needed */
+  }
 
-:deep(
-    .custom-datatable
-      .p-datatable-table-container
-      table.p-datatable-table.p-datatable-scrollable-table
-      tbody.p-datatable-tbody
-      tr
-      td
-  ) {
-  display: table-cell !important;
-}
+  :deep(
+      .custom-datatable
+        .p-datatable-table-container
+        table.p-datatable-table.p-datatable-scrollable-table
+        tbody.p-datatable-tbody
+        tr
+        td
+    ) {
+    display: table-cell !important;
+  }
 
-.custom-datatable .p-datatable-tbody > tr > td,
-.custom-datatable .p-datatable-thead > tr > th {
-  display: table-cell !important;
-  width: auto !important;
-}
+  .custom-datatable .p-datatable-tbody > tr > td,
+  .custom-datatable .p-datatable-thead > tr > th {
+    display: table-cell !important;
+    width: auto !important;
+  }
 </style>

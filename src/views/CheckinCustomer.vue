@@ -1,5 +1,5 @@
 <template>
-  <div v-if="isNumberEnterStep" class="flex flex-col items-center justify-center h-screen bg-pink-100 p-4 md:p-8">
+  <div v-show="isNumberEnterStep" class="flex flex-col items-center justify-center h-screen bg-pink-100 p-4 md:p-8">
     <header class="text-4xl font-bold text-gray-700 mb-6 text-center">
       <span>NAILS MATE</span>
       <span class="mx-2">|</span>
@@ -53,7 +53,7 @@
       </label>
     </footer>
   </div>
-  <div v-else class="background-container">
+  <div class="background-container">
     <CardBox bgColor="bg-pink-100" class="cursor-pointer md:w-3/5 lg:w-5/12 md:h-h-2/5 lg:h-3/5 shadow-2xl md:mx-auto"
       is-hoverable>
       <header class="text-2xl font-bold tracking-wider text-gray-900 mb-12 flex justify-center items-center space-x-4">
