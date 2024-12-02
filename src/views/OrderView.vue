@@ -1002,8 +1002,11 @@ async function autoAssignTask() {
 </template>
 
 <style scoped>
-::v-deep .p-tree-node-label {
+:deep(.p-tree-node-label) {
   width: 100%;
+}
+:deep(.p-tree-node-toggle-button){
+  display: none;
 }
 .thick-border {
   border-width: 1.5px;
