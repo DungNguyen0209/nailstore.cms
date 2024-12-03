@@ -904,15 +904,15 @@
               class="ml-2 text-white py-1 px-3 rounded-full"
             />
           </div>
-          <div class="flex flex-col mb-4">
-            <label class="text-lg font-semibold dark:text-white w-24">Note</label>
-            <Textarea
+          <div class="flex items-center mb-4">
+            <Button
               :disabled="disableEdit"
-              v-model="reflectSelectedOrder.note"
-              class="flex-auto h-20 dark:bg-slate-800 rounded-md"
-              rows="4"
-              autocomplete="off"
-            />
+              @click="addNewWorkerService"
+              variant="outlined"
+              class="!border-dashed w-full"
+              style="border-width: 2px; width: 100%;"
+              icon="pi pi-plus"
+            ></Button>
           </div>
           <div class="flex items-center mb-4">
             <Button
@@ -1033,7 +1033,7 @@
               </div>
               </template>
             </Column>
-            <Column :exportable="false" class="justify-start">
+            <Column :exportable="false" class="justify-center">
               <template #body="slotProps">
               <Button
                 icon="pi pi-trash"
