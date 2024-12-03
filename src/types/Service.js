@@ -24,7 +24,7 @@ class Service {
         this.type = type;
         this.updatedTime = updatedTime == null ? new Date : new Date(updatedTime);
         this.createdTime = createdTime == null ? new Date : new Date(createdTime);
-        this.createdBy = createdBy == null ? '' : createdBy;
+        this.createdBy = createdBy == null ? null : createdBy;
         this.updatedBy = updatedBy == null ? '' : updatedBy;
         this.isDeleted = isDeleted == null ? false : isDeleted;
         this.categoryId = categoryId == null ? '' : categoryId;

@@ -19,8 +19,6 @@ class Bill {
     isDeleted,
     serviceWorker
   } = {}) {
-    console.log('id', id)
-    console.log('price', price)
     this.id = id == null ? uuidv7() : id
     this.orderId = orderId == null ? '' : orderId
     this.price = price == null ? '' : parseFloat(price)

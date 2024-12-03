@@ -55,12 +55,15 @@
     { name: 'Category Service', value: 2 }
   ])
 
-  const isLoading = ref(false)
   const isUpdate = ref(false)
 
   onMounted(async () => {
-    isLoading.value = true
-    refreshNewService()
+    refreshInfor()
+    await queryService()
+  })
+
+  async function queryService() {
+    masterData.setComponentLoading(true)
     await getListService({ pageSize: currentPageSize.value, pageNumber: 1 })
       .then((response) => {
         services.value = response.data?.services?.map((serviceData) => createService(serviceData))
@@ -68,12 +71,12 @@
         totalRecords.value = response.data?.total
       })
       .catch(() => {
-        console.log('error')
+        showCommonErrorMessage('Error', 'Please reload page')
       })
       .finally(() => {
-        isLoading.value = false
+        masterData.setComponentLoading(false)
       })
-  })
+  }
 
   const props = defineProps({
     label: {
@@ -82,11 +85,20 @@
     }
   })
 
-  const refreshNewService = () => {
+  const refreshInfor = async () => {
+    if (SelectedType.value == 1 && reflectNewService.value != newService.value) {
+      await queryService()
+    }
+    if (SelectedType.value == 2 && reflectNewCategory.value != newCategory.value) {
+      await queryCategory()
+    }
+
     isUpdate.value = false
     newService.value = createService()
+    reflectNewService.value = null
     newService.value.createdBy = masterData.userInfo?.id ?? ''
     newCategory.value = new BaseMasterData()
+    reflectNewCategory.value = null
   }
 
   const Dropdowncategories = ref(null)
@@ -99,7 +111,6 @@
     if (SelectedType.value == 1) {
       await getCategoryForDropDown()
         .then((response) => {
-          console.log(response)
           Dropdowncategories.value = response.data?.map((category) => {
             return {
               name: category.label,
@@ -109,7 +120,7 @@
           modalCreateActive.value = true
         })
         .catch((exception) => {
-          console.log('can not query categories', exception)
+          showCommonErrorMessage('Error', 'Can not query categories')
         })
       return
     }
@@ -121,7 +132,7 @@
         .then(() => {
           showSuccessCreateService(newService.value)
           modalCreateActive.value = false
-          refreshNewService()
+          refreshInfor()
         })
         .catch(() => {})
       return
@@ -137,7 +148,7 @@
     ])
       .then(() => {
         showSuccessCreateService(newService.value)
-        refreshNewService()
+        refreshInfor()
         modalCreateActive.value = false
       })
       .catch(() => {})
@@ -149,7 +160,7 @@
         .then(() => {
           showSuccessCreateService(newCategory.value)
           modalCategoryCreateActive.value = false
-          refreshNewService()
+          refreshInfor()
         })
         .catch(() => {})
       return
@@ -162,7 +173,7 @@
     ])
       .then(() => {
         showSuccessCreateService(newService.value)
-        refreshNewService()
+        refreshInfor()
         modalCategoryCreateActive.value = false
       })
       .catch(() => {})
@@ -170,42 +181,33 @@
 
   async function ChangeTab(params) {
     if (params.value == 1) {
-      isLoading.value = true
-      await getListService({ pageSize: currentPageSize.value, pageNumber: 1 })
-        .then((response) => {
-          services.value = response.data?.services?.map((serviceData) => createService(serviceData))
-          currentPageSize.value = response.data?.pageSize
-          totalRecords.value = response.data?.total
-        })
-        .catch(() => {
-          console.log('error')
-        })
-        .finally(() => {
-          isLoading.value = false
-          return
-        })
+      await queryService()
       return
     }
+    await queryCategory()
+  }
+
+  async function queryCategory() {
+    masterData.setComponentLoading(true)
     await getAllCategories({ pageSize: categoryPageSize.value, pageNumber: 1 })
       .then((response) => {
         categories.value = response.data?.data?.map((category) => {
-          console.log(category)
           return new BaseMasterData(category)
         })
         categoryPageSize.value = response.data?.pageSize
         categoryTotal.value = response.data?.total
       })
       .catch(() => {
-        console.log('error')
+        showCommonErrorMessage('Error', 'Can not get data')
       })
       .finally(() => {
-        isLoading.value = false
+        masterData.setComponentLoading(false)
         return
       })
   }
 
   async function changePagingService(event) {
-    isLoading.value = true
+    masterData.setComponentLoading(true)
     await getListService({ pageSize: event.rows, pageNumber: event.page + 1 })
       .then((response) => {
         services.value = response.data?.services?.map((serviceData) => createService(serviceData))
@@ -213,38 +215,35 @@
         totalRecords.value = response.data?.total
       })
       .catch(() => {
-        console.log('error')
+        showCommonErrorMessage('Error', 'Can not get data')
       })
       .finally(() => {
-        isLoading.value = false
+        masterData.setComponentLoading(false)
         return
       })
   }
 
   const changePagingCategory = (event) => {
-    isLoading.value = true
+    masterData.setComponentLoading(true)
     getAllCategories({ pageSize: event.rows, pageNumber: event.page + 1 })
       .then((response) => {
         categories.value = response.data?.data?.map((category) => {
-          console.log(category)
           return new BaseMasterData(category)
         })
         categoryPageSize.value = response.data?.pageSize
         categoryTotal.value = response.data?.total
       })
-      .catch(() => {
-        console.log('error')
-      })
+      .catch(() => {})
       .finally(() => {
-        isLoading.value = false
+        masterData.setComponentLoading(false)
         return
       })
   }
 
+  const reflectNewService = ref(null)
   async function editService(service) {
     await getCategoryForDropDown()
       .then((response) => {
-        console.log(response)
         Dropdowncategories.value = response.data?.map((category) => {
           return {
             name: category.label,
@@ -252,16 +251,19 @@
           }
         })
         newService.value = service
+        reflectNewService.value = service
         isUpdate.value = true
         modalCreateActive.value = true
       })
       .catch((exception) => {
-        console.log('can not query categories', exception)
+        showCommonErrorMessage('Error', 'Can not query categories')
       })
   }
 
+  const reflectNewCategory = ref(null)
   async function editCategory(category) {
     newCategory.value = category
+    reflectNewCategory.value = category
     isUpdate.value = true
     modalCategoryCreateActive.value = true
   }
@@ -270,6 +272,7 @@
     deleteServiceById(id)
       .then(() => {
         services.value = services.value.filter((s) => s.id != id)
+
         showCommonSuccessMessage('Delete Service', 'Service deleted successfully')
       })
       .catch((error) => {
@@ -295,7 +298,7 @@
       <div class="h-4/5">
         <SectionTitleLineWithButton :icon="mdiTableBorder" title="Service " main>
           <Dialog
-            @hide="refreshNewService"
+            @hide="refreshInfor"
             class="dark:bg-slate-900 dark:text-white"
             v-model:visible="modalCreateActive"
             modal
@@ -378,7 +381,7 @@
             </div>
           </Dialog>
           <Dialog
-            @hide="refreshNewService"
+            @hide="refreshInfor"
             class="dark:bg-slate-900 dark:text-white"
             v-model:visible="modalCategoryCreateActive"
             modal
@@ -443,7 +446,7 @@
           v-if="SelectedType == 1"
           checkable
           :services="services"
-          :isloading="isLoading"
+          :isloading="masterData.isComponentLoading"
           :total-records="totalRecords"
           @changePaging="changePagingService"
           @editService="editService"
@@ -454,7 +457,7 @@
           v-else
           checkable
           :categories="categories"
-          :isloading="isLoading"
+          :isloading="masterData.isComponentLoading"
           @deleteCategory="deleteServiceCategory"
           @changePaging="changePagingCategory"
           :total-records="categoryTotal"

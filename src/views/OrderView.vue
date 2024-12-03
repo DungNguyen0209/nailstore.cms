@@ -26,7 +26,7 @@
   import { getOrderSeverity } from '@/helpers/order'
   import { getStaffForDropDown } from '@/api/userApi'
   import { getServiceForDropDown } from '@/api/serviceApi'
-  import { CreditPointType, OrderStatus } from '@/helpers/constants'
+  import { CreditPointType, OrderStatus, sortDirection } from '@/helpers/constants'
   import {
     updateOrderInfo,
     getOrders,
@@ -52,10 +52,12 @@
   const orders = ref([new Order({})])
   const pageSize = ref(10)
   const currentPage = ref(1)
+  const sort = ref(sortDirection.Desc)
+  const status = ref([OrderStatus.Open, OrderStatus.Processing])
   const totalRecords = ref(0)
   const newOrder = ref(new Order({}))
   const visibleEdit = ref(false)
-  const reflectSelectedOrder = ref(null)
+  const selectedOrder = ref(null)
   const billInfo = ref(null)
   const services = ref([])
   const serviceOption = ref(null)
@@ -64,26 +66,25 @@
   const selectedWorkerService = ref(null)
   const expandedKeys = ref({})
   const disabledCheckOut = computed(() => {
-    return reflectSelectedOrder.value?.order?.status === OrderStatus.Payment
+    return selectedOrder.value?.order?.status === OrderStatus.Payment
   })
 
   const labelByOrderStatus = computed(() => {
-    if (reflectSelectedOrder.value?.order?.status === OrderStatus.Open) {
+    if (selectedOrder.value?.order?.status === OrderStatus.Open) {
       return 'Process'
-    } else if (reflectSelectedOrder.value?.order?.status === OrderStatus.Processing) {
+    } else if (selectedOrder.value?.order?.status === OrderStatus.Processing) {
       return 'Pay'
-    } else if (reflectSelectedOrder.value?.order?.status === OrderStatus.Payment) {
+    } else if (selectedOrder.value?.order?.status === OrderStatus.Payment) {
       return 'Check Out'
     }
     return ''
   })
   const isAllowUpdateOrderStatus = computed(
     () => {
-      console.log('reflectSelectedOrder', reflectSelectedOrder.value?.workerService?.length > 0)
       return (
-        reflectSelectedOrder.value?.workerService?.length > 0 &&
-        reflectSelectedOrder.value?.workerService?.some((x) => x.services.length > 0) &&
-        reflectSelectedOrder.value?.workerService?.some((x) => x.worker.code != null)
+        selectedOrder.value?.workerService?.length > 0 &&
+        selectedOrder.value?.workerService?.some((x) => x.services.length > 0) &&
+        selectedOrder.value?.workerService?.some((x) => x.worker.code != null)
       )
     },
     { deep: true, immediate: true }
@@ -105,8 +106,8 @@
     if (billInfo.value != null) {
       val = parseFloat(billInfo.value.price) + parseFloat(creditPointBillDiscount.value.discount)
     }
-    if (reflectSelectedOrder.value != null) {
-      val = reflectSelectedOrder.value.serviceWorker.reduce((acc, x) => acc + x.totalPrice, 0)
+    if (selectedOrder.value != null) {
+      val = selectedOrder.value.serviceWorker.reduce((acc, x) => acc + x.totalPrice, 0)
     }
     return val.toFixed(4)
   })
@@ -117,7 +118,7 @@
       val = billInfo.value.price
       return val
     }
-    val = reflectSelectedOrder.value.serviceWorker.reduce((acc, x) => acc + x.totalPrice, 0)
+    val = selectedOrder.value.serviceWorker.reduce((acc, x) => acc + x.totalPrice, 0)
     if (acceptDiscount.value) {
       return (parseFloat(val) - parseFloat(creditPoint.value.discount)).toFixed(4)
     }
@@ -125,15 +126,15 @@
   })
 
   const creditPoint = computed((previous) => {
-    if (reflectSelectedOrder?.value?.order == null) {
+    if (selectedOrder?.value?.order == null) {
       return
     }
     const availablePoint =
-      reflectSelectedOrder?.value?.order?.owner?.creditPoints?.find(
+      selectedOrder?.value?.order?.owner?.creditPoints?.find(
         (point) => point.type === CreditPointType.Availabe
       )?.value ?? 0
-    const requiredPoint = reflectSelectedOrder?.value?.order?.creditPointSetting?.requiredPoints ?? 1
-    const price = reflectSelectedOrder?.value?.order?.creditPointSetting?.price ?? 0
+    const requiredPoint = selectedOrder?.value?.order?.creditPointSetting?.requiredPoints ?? 1
+    const price = selectedOrder?.value?.order?.creditPointSetting?.price ?? 0
     const usingPoint = Math.floor(parseInt(availablePoint) / parseInt(requiredPoint))
     return {
       availablePoint: availablePoint,
@@ -182,13 +183,23 @@
   const isVisibleSelectService = ref(false)
   onMounted(async () => {
     masterData.setIsLoading(true)
-    refreshNewService()
+    refreshDetailInfor()
     await getDefaultOrders()
     masterData.setIsLoading(false)
   })
 
-  const getDefaultOrders = async () => {
-    return await getOrders({ pageSize: pageSize.value, pageNumber: currentPage.value })
+  const getDefaultOrders = async (e) => {
+    masterData.setComponentLoading(true)
+    if (e != null) {
+      sort.value = e.sortDirection
+      status.value = e.status
+    }
+    return await getOrders({
+      pageSize: pageSize.value,
+      pageNumber: currentPage.value,
+      sortDirection: sort.value,
+      status: status.value
+    })
       .then((response) => {
         totalRecords.value = response.data?.total
         pageSize.value = response.data?.pageSize
@@ -198,16 +209,30 @@
       .catch(() => {
         showCommonErrorMessage('Error Message', 'Can not get orders')
       })
+      .finally(() => {
+        masterData.setComponentLoading(false)
+      })
   }
 
-  const refreshNewService = () => {
+  const refreshDetailInfor = async () => {
+    if (selectedOrder.value != reflectSelectedOrder.value || billInfo.value != reflectBill.value) {
+      await getDefaultOrders()
+    }
     newOrder.value = new Order({})
+    billInfo.value = null
+    selectedOrder.value = null
     newOrder.value.createdBy = masterData.userInfo?.id ?? ''
+    reflectSelectedOrder.value = null
+    reflectBill.value = null
   }
+
+  const reflectSelectedOrder = ref(null)
+  const reflectBill = ref(null)
 
   const editOrder = async (order) => {
     billInfo.value = null
-    reflectSelectedOrder.value = null
+    selectedOrder.value = null
+    masterData.setIsLoading(true)
     if (order.status === OrderStatus.Done) {
       await getBillInformation(order.id)
         .then(() => {
@@ -216,11 +241,13 @@
         .catch(() => {
           showCommonErrorMessage('Error Message', 'Can not get payment detail')
         })
+      masterData.setIsLoading(false)
       return
     }
     await getOrderInformation(order.id)
-    if (reflectSelectedOrder.value.order.status === OrderStatus.Payment) {
+    if (selectedOrder.value.order.status === OrderStatus.Payment) {
       visibleEdit.value = true
+      masterData.setIsLoading(false)
       return
     }
     await getServiceForDropDown().then((resp) => {
@@ -263,19 +290,17 @@
           value: s.numberOrder,
           name: s.fullName
         })) || []
-      if (
-        reflectSelectedOrder.value.workerService != null &&
-        reflectSelectedOrder.value.workerService?.length > 0
-      )
-        staffs.value.push(...reflectSelectedOrder.value.workerService?.map((x) => x.worker))
+      if (selectedOrder.value.workerService != null && selectedOrder.value.workerService?.length > 0)
+        staffs.value.push(...selectedOrder.value.workerService?.map((x) => x.worker))
     })
     visibleEdit.value = true
+    masterData.setIsLoading(false)
   }
 
   async function getOrderInformation(id) {
     await getOrderDetail(id)
       .then((resp) => {
-        reflectSelectedOrder.value = {
+        selectedOrder.value = {
           order: resp.data?.order,
           workerService:
             resp.data?.workerService?.map((x) => ({
@@ -306,6 +331,7 @@
             })) || [],
           note: resp.data?.order.note
         }
+        reflectSelectedOrder.value = selectedOrder.value
       })
       .catch(() => {
         showCommonErrorMessage('Error Message', 'Can not get detail order')
@@ -316,6 +342,7 @@
     await getPaymentDetail(id)
       .then((response) => {
         billInfo.value = new Bill(response.data)
+        reflectBill.value = billInfo.value
       })
       .catch(() => {
         visibleEdit.value = false
@@ -324,7 +351,13 @@
   }
 
   async function getPagingOrders(params) {
-    await getOrders({ pageSize: params.rows, pageNumber: params.page + 1 })
+    masterData.setComponentLoading(true)
+    await getOrders({
+      pageSize: params.rows,
+      pageNumber: params.page + 1,
+      sortDirection: sort.value,
+      status: status.value
+    })
       .then((response) => {
         totalRecords.value = response.data?.total
         orders.value = response.data?.orders?.map((orderData) => new Order(orderData))
@@ -332,10 +365,13 @@
       .catch(() => {
         showCommonErrorMessage('Error Message', 'Can not get orders')
       })
+      .finally(() => {
+        masterData.setComponentLoading(false)
+      })
   }
 
   const addNewWorkerService = () => {
-    reflectSelectedOrder.value.workerService.push({
+    selectedOrder.value.workerService.push({
       worker: {
         code: null,
         name: null
@@ -345,41 +381,38 @@
   }
 
   const confirmDeleteProduct = (item) => {
-    const index = reflectSelectedOrder.value.workerService.indexOf(item)
+    const index = selectedOrder.value.workerService.indexOf(item)
     if (index > -1) {
-      reflectSelectedOrder.value.workerService.splice(index, 1)
+      selectedOrder.value.workerService.splice(index, 1)
     }
   }
 
   const disableEdit = computed(() => {
-    return reflectSelectedOrder.value?.order?.status === OrderStatus.Payment
+    return selectedOrder.value?.order?.status === OrderStatus.Payment
   })
 
   const isInvalidWorker = (worker) => {
     if (worker === null) {
       return true
     }
-    return (
-      reflectSelectedOrder.value.workerService?.filter((x) => x.worker.code === worker.code).length >
-      1
-    )
+    return selectedOrder.value.workerService?.filter((x) => x.worker.code === worker.code).length > 1
   }
 
   async function UpdateOrderDetailStatus() {
     var status =
-      reflectSelectedOrder.value.order.status === OrderStatus.Open
+      selectedOrder.value.order.status === OrderStatus.Open
         ? OrderStatus.Processing
         : OrderStatus.Payment
-    await UpdateOrderStatus(reflectSelectedOrder.value.order.id, status)
+    await UpdateOrderStatus(selectedOrder.value.order.id, status)
       .then(async () => {
         if (status === OrderStatus.Payment) {
-          await getOrderInformation(reflectSelectedOrder.value.order.id)
+          await getOrderInformation(selectedOrder.value.order.id)
         } else {
-          reflectSelectedOrder.value.order.status = status
+          selectedOrder.value.order.status = status
         }
         if (status === OrderStatus.Done) {
-          reflectSelectedOrder.value = null
-          getBillInformation(reflectSelectedOrder.value.order.id)
+          selectedOrder.value = null
+          getBillInformation(selectedOrder.value.order.id)
         }
         showSuccessUpdateOrder()
       })
@@ -391,10 +424,10 @@
   async function saveOrderInformation() {
     await updateOrderInfo(
       {
-        id: reflectSelectedOrder.value.order.id,
-        note: reflectSelectedOrder.value.note
+        id: selectedOrder.value.order.id,
+        note: selectedOrder.value.note
       },
-      reflectSelectedOrder.value.workerService.map((x) => ({
+      selectedOrder.value.workerService.map((x) => ({
         workerId: x.worker.code,
         services: x.services.map((s) => ({
           id: s.code,
@@ -413,8 +446,8 @@
   async function updatePaymentOrder() {
     await updateOrderInfo(
       {
-        id: reflectSelectedOrder.value.order.id,
-        note: reflectSelectedOrder.value.note
+        id: selectedOrder.value.order.id,
+        note: selectedOrder.value.note
       },
       getPaymentServiceWorker()
     )
@@ -427,10 +460,10 @@
   }
 
   function getPaymentServiceWorker() {
-    return [...new Set(reflectSelectedOrder.value.serviceWorker.map((x) => x.worker.code))].map(
+    return [...new Set(selectedOrder.value.serviceWorker.map((x) => x.worker.code))].map(
       (workerId) => ({
         workerId,
-        services: reflectSelectedOrder.value.serviceWorker
+        services: selectedOrder.value.serviceWorker
           .filter((x) => x.worker.code === workerId)
           .map((x) => ({
             id: x.service.code,
@@ -471,17 +504,17 @@
     let workerService = getPaymentServiceWorker()
     await updateOrderInfo(
       {
-        id: reflectSelectedOrder.value.order.id,
-        note: reflectSelectedOrder.value.note
+        id: selectedOrder.value.order.id,
+        note: selectedOrder.value.note
       },
       workerService
     ).then(async () => {
       await CheckoutOrder(
-        reflectSelectedOrder.value.order.id,
+        selectedOrder.value.order.id,
         parseFloat(totalPrice.value),
         creditPoint.value.usingPoint,
         creditPoint.value.discount,
-        reflectSelectedOrder.value.note
+        selectedOrder.value.note
       ).then(() => {
         showSuccessUpdateOrder()
       })
@@ -530,24 +563,21 @@
         showCommonErrorMessage('Error Message', 'Can not auto assign order')
       })
   }
-  const getValue = (node) => {
-   console.log("===",node)
-  }
-
 </script>
 
 <template>
   <LayoutAuthenticated>
     <SectionMain>
-      <SectionTitleLineWithButton :icon="mdiInvoice" title="Order" main>
-      </SectionTitleLineWithButton>
       <CardBox class="mb-6" has-table>
         <OrderTable
           :orders="orders"
           :page-numer="pageSize"
           :page-size="pageSize"
+          :sort-direction="sort"
+          :status="status"
           :total-records="totalRecords"
-          @reload-orders=";async () => await getDefaultOrders()"
+          :is-loading="masterData.isComponentLoading"
+          @reload-orders="(e) => getDefaultOrders(e)"
           @auto-assign="autoAssignTask"
           @change-paging="getPagingOrders"
           @edit-order="(order) => editOrder(order)"
@@ -558,6 +588,7 @@
         v-model:visible="visibleEdit"
         position="top"
         style="height: 100%"
+        @hide="refreshDetailInfor"
         :header="billInfo != null ? 'Payment Checkout' : 'Detail Order'"
       >
         <div v-if="billInfo != null">
@@ -715,14 +746,14 @@
             </div>
           </VeeForm>
         </div>
-        <div v-else-if="reflectSelectedOrder.order.status === OrderStatus.Payment">
+        <div v-else-if="selectedOrder.order.status === OrderStatus.Payment">
           <VeeForm :validation-schema="schema">
             <div class="flex flex-col sm:flex-row">
               <div class="sm:basis-4/6 w-full">
                 <div>
                   <div class="flex flex-col h-screen">
                     <ScrollPanel style="height: 55%">
-                      <DataView :value="reflectSelectedOrder.serviceWorker">
+                      <DataView :value="selectedOrder.serviceWorker">
                         <template #list="slotProps">
                           <div class="flex flex-col">
                             <div
@@ -801,13 +832,13 @@
                     <div class="flex flex-row w-full ml-4 gap-4">
                       <span class="text-lg font-semibold">Full name:</span>
                       <span class="text-gray-800 pt-0.5">{{
-                        reflectSelectedOrder.order.owner.fullName
+                        selectedOrder.order.owner.fullName
                       }}</span>
                     </div>
                     <div class="flex flex-row w-full ml-4 gap-4">
                       <i class="pi pi-phone content-center font-thin" style="font-size: 1rem"></i>
                       <span class="text-gray-800 pb-0.5 font-thin">{{
-                        reflectSelectedOrder.order.owner.phone
+                        selectedOrder.order.owner.phone
                       }}</span>
                     </div>
                   </div>
@@ -816,20 +847,20 @@
                   <div class="flex flex-col w-full ml-4 gap-1">
                     <span>Gmail</span>
                     <span class="text-gray-800 font-thin">{{
-                      reflectSelectedOrder.order.owner.email
+                      selectedOrder.order.owner.email
                     }}</span>
                   </div>
                   <div class="flex flex-col w-full ml-4 gap-1">
                     <span>Check in</span>
                     <span class="text-gray-800 font-thin">{{
-                      new Date(reflectSelectedOrder.order.createdTime).toLocaleString()
+                      new Date(selectedOrder.order.createdTime).toLocaleString()
                     }}</span>
                   </div>
                 </div>
                 <div class="flex flex-col mt-4">
                   <label class="text-lg font-semibold dark:text-white w-24">Note</label>
                   <Textarea
-                    v-model="reflectSelectedOrder.order.note"
+                    v-model="selectedOrder.order.note"
                     class="flex-auto h-20 dark:bg-slate-800 rounded-md"
                     rows="4"
                     autocomplete="off"
@@ -886,21 +917,21 @@
         <div class="gap-4" v-else>
           <div class="mb-4">
             <span class="text-lg font-semibold">Full Name:</span>
-            <span class="ml-2 text-gray-800">{{ reflectSelectedOrder.order.owner.fullName }}</span>
+            <span class="ml-2 text-gray-800">{{ selectedOrder.order.owner.fullName }}</span>
           </div>
           <div class="mb-4">
             <span class="text-lg font-semibold">Phone:</span>
-            <span class="ml-2 text-gray-800">{{ reflectSelectedOrder.order.owner.phone }}</span>
+            <span class="ml-2 text-gray-800">{{ selectedOrder.order.owner.phone }}</span>
           </div>
           <div class="mb-4">
             <span class="text-lg font-semibold">E-Mail:</span>
-            <span class="ml-2 text-gray-800">{{ reflectSelectedOrder.order.owner.email }}</span>
+            <span class="ml-2 text-gray-800">{{ selectedOrder.order.owner.email }}</span>
           </div>
           <div class="flex items-center mb-4">
             <span class="text-lg font-semibold">Trạng thái:</span>
             <Tag
-              :severity="getOrderSeverity(reflectSelectedOrder.order.status)"
-              :value="reflectSelectedOrder.order.status"
+              :severity="getOrderSeverity(selectedOrder.order.status)"
+              :value="selectedOrder.order.status"
               class="ml-2 text-white py-1 px-3 rounded-full"
             />
           </div>
@@ -908,7 +939,7 @@
             <label class="text-lg font-semibold dark:text-white w-24">Note</label>
             <Textarea
               :disabled="disableEdit"
-              v-model="reflectSelectedOrder.note"
+              v-model="selectedOrder.note"
               class="flex-auto h-20 dark:bg-slate-800 rounded-md"
               rows="4"
               autocomplete="off"
@@ -920,133 +951,130 @@
               @click="addNewWorkerService"
               variant="outlined"
               class="!border-dashed w-full"
-              style="border-width: 2px; width: 100%;"
+              style="border-width: 2px; width: 100%"
               icon="pi pi-plus"
             ></Button>
           </div>
-            <DataTable :value="reflectSelectedOrder.workerService" class="custom-datatable">
+          <DataTable :value="selectedOrder.workerService" class="custom-datatable">
             <Column field="status" header="Staff" class="sm:w-1/4">
               <template #body="slotProps">
-              <FloatLabel class="w-full md:w-56 mt-3">
-                <Select
-                :invalid="isInvalidWorker(slotProps.data.worker.code)"
-                :disabled="disableEdit"
-                id="over_label"
-                v-model="slotProps.data.worker"
-                :options="staffs"
-                placeholder="Staff" 
-                optionLabel="name"
-                class="w-full text-sm min-h-4"
-                >
-                  <template #value="option">
-                    <div class="flex flex-row justify-between">
-                      <span class="font-light">{{ option.value.name ?? "Staff" }}</span>
-                      <span class="font-medium">{{ option.value.value }}</span>
-                    </div>
-                  </template>
-                  <template #option="options">
-                    <div class="w-full flex flex-row justify-between">
-                      <span class="font-light">{{ options.option.name }}</span>
-                      <span class="font-medium">{{ options.option.value }}</span>
-                    </div>
-                  </template>
-                </Select>
-                <label class="text-sm" for="over_label">Staff</label>
-              </FloatLabel>
+                <FloatLabel class="w-full md:w-56 mt-3">
+                  <Select
+                    :invalid="isInvalidWorker(slotProps.data.worker.code)"
+                    :disabled="disableEdit"
+                    id="over_label"
+                    v-model="slotProps.data.worker"
+                    :options="staffs"
+                    placeholder="Staff"
+                    optionLabel="name"
+                    class="w-full text-sm min-h-4"
+                  >
+                    <template #value="option">
+                      <div class="flex flex-row justify-between">
+                        <span class="font-light">{{ option.value.name ?? 'Staff' }}</span>
+                        <span class="font-medium">{{ option.value.value }}</span>
+                      </div>
+                    </template>
+                    <template #option="options">
+                      <div class="w-full flex flex-row justify-between">
+                        <span class="font-light">{{ options.option.name }}</span>
+                        <span class="font-medium">{{ options.option.value }}</span>
+                      </div>
+                    </template>
+                  </Select>
+                  <label class="text-sm" for="over_label">Staff</label>
+                </FloatLabel>
               </template>
             </Column>
-            <Column field="type" header="Service" class="sm:w-4/5 ">
+            <Column field="type" header="Service" class="sm:w-4/5">
               <template #body="slotProps">
-              <Dialog
-                v-model:visible="isVisibleSelectService"
-                modal
-                header="Services"
-                class="w-3/4 sm:w-1/2"
-              >
-                <Tree
-                :value="serviceOption"
-                :filter="true"
-                filterMode="lenient"
-                selectionMode="single"
-                :expandedKeys="expandedKeys"
-                class="w-full md:w-30rem"
+                <Dialog
+                  v-model:visible="isVisibleSelectService"
+                  modal
+                  header="Services"
+                  class="w-3/4 sm:w-1/2"
                 >
-                <template #default="slotProps">
-                  <p class="font-medium">{{ slotProps.node.label }}</p>
-                </template>
-                <template #service="slotProps">
-                  <div class="flex flex-row w-full">
-                  <Checkbox
-                    v-model:model-value="slotProps.node.checked"
-                    @change="checkItem(slotProps.node)"
-                    binary
-                  />
-                  <div class="w-full sm:w-4/5 flex flex-col sm:flex-row">
-                    <div class="w-full sm:w-9/12 inline-block">
-                    <article class="ml-1 text-wrap">
-                      <p class="break-words font-light">{{ slotProps.node.label }}</p>
-                    </article>
-                    </div>
-                    <p class="w-full sm:w-3/12 sm:ml-12 font-medium">
-                    {{ slotProps.node.data }} €
-                    </p>
-                  </div>
-                  </div>
-                </template>
-                </Tree>
-                <template #footer>
-                <Button label="Save" @click="isVisibleSelectService = false" autofocus />
-                </template>
-              </Dialog>
-              <div
-                class="bg-white 
-                flex 
-                min-h-6
-                flex-wrap 
-                w-full hover:cursor-pointer p-3 border rounded-lg border-gray-300"
-                @click="selectService(slotProps.data)"
-                data-text="Input ...."
-              >
-                <Chip
-                v-for="service in slotProps.data.services"
-                :key="service.code"
-                class="py-0 pl-0 pr-4 m-1"
-                >
-                  <span
-                    class="w-1/2 bg-primary text-sm rounded-full flex items-center justify-center"
-                    >{{ service.name }}</span
+                  <Tree
+                    :value="serviceOption"
+                    :filter="true"
+                    filterMode="lenient"
+                    selectionMode="single"
+                    :expandedKeys="expandedKeys"
+                    class="w-full md:w-30rem"
                   >
-                  <div class="w-1/2">
-                    <InputNumber
-                      v-model="service.price"
-                      :minFractionDigits="2"
-                      @click.stop
-                      size="small"
-                      inputId="currency-germany"
-                      mode="currency"
-                      currency="EUR"
-                     :min="0" :max="10000"
-                      locale="de-DE"
-                    />
-                  </div>
+                    <template #default="slotProps">
+                      <p class="font-medium">{{ slotProps.node.label }}</p>
+                    </template>
+                    <template #service="slotProps">
+                      <div class="flex flex-row w-full">
+                        <Checkbox
+                          v-model:model-value="slotProps.node.checked"
+                          @change="checkItem(slotProps.node)"
+                          binary
+                        />
+                        <div class="w-full sm:w-4/5 flex flex-col sm:flex-row">
+                          <div class="w-full sm:w-9/12 inline-block">
+                            <article class="ml-1 text-wrap">
+                              <p class="break-words font-light">{{ slotProps.node.label }}</p>
+                            </article>
+                          </div>
+                          <p class="w-full sm:w-3/12 sm:ml-12 font-medium">
+                            {{ slotProps.node.data }} €
+                          </p>
+                        </div>
+                      </div>
+                    </template>
+                  </Tree>
+                  <template #footer>
+                    <Button label="Save" @click="isVisibleSelectService = false" autofocus />
+                  </template>
+                </Dialog>
+                <div
+                  class="bg-white flex min-h-6 flex-wrap w-full hover:cursor-pointer p-3 border rounded-lg border-gray-300"
+                  @click="selectService(slotProps.data)"
+                  data-text="Input ...."
+                >
+                  <Chip
+                    v-for="service in slotProps.data.services"
+                    :key="service.code"
+                    class="py-0 pl-0 pr-4 m-1"
+                  >
+                    <span
+                      class="w-1/2 bg-primary text-sm rounded-full flex items-center justify-center"
+                      >{{ service.name }}</span
+                    >
+                    <div class="w-1/2">
+                      <InputNumber
+                        v-model="service.price"
+                        :minFractionDigits="2"
+                        @click.stop
+                        size="small"
+                        inputId="currency-germany"
+                        mode="currency"
+                        currency="EUR"
+                        :min="0"
+                        :max="10000"
+                        locale="de-DE"
+                      />
+                    </div>
                   </Chip>
-              </div>
+                </div>
               </template>
             </Column>
             <Column :exportable="false" class="justify-center">
               <template #body="slotProps">
-              <Button
-                icon="pi pi-trash"
-                outlined
-                rounded
-                class="item-center"
-                :disabled="disableEdit"
-                severity="danger"
-                @click="confirmDeleteProduct(slotProps.data)"
-              />
+                <Button
+                  icon="pi pi-trash"
+                  outlined
+                  rounded
+                  class="item-center"
+                  :disabled="disableEdit"
+                  severity="danger"
+                  @click="confirmDeleteProduct(slotProps.data)"
+                />
               </template>
             </Column>
-            </DataTable>
+          </DataTable>
           <div
             class="flex justify-start gap-4 mt-4 sticky bottom-0 end-0 w-full p-4 border border-slate-400 bg-white"
           >
@@ -1092,7 +1120,7 @@
     width: 100%;
   }
   div:empty:not(:focus):before {
-	content: attr(data-text);
-  color: #999999;
-}
+    content: attr(data-text);
+    color: #999999;
+  }
 </style>

@@ -24,10 +24,12 @@ export async function createOrder({ isNewAccount, ownerId, account, createdBy, d
   return await api.post('api/orders/createOrder', payload)
 }
 
-export async function getOrders({ pageSize, pageNumber }) {
+export async function getOrders({ pageSize, pageNumber, sortDirection, status }) {
   return await api.post('api/orders', {
     pageSize: pageSize,
-    pageNumber: pageNumber
+    pageNumber: pageNumber,
+    sortDirection: sortDirection,
+    status: status
   })
 }
 
