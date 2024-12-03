@@ -1,8 +1,8 @@
 <template>
-  <div v-show="isNumberEnterStep" class="flex flex-col items-center justify-center h-screen bg-pink-100 p-4 md:p-8">
-    <div class="absolute top-0 left-0 m-4">
-          <Button class="text-white" icon="pi pi-home" rounded aria-label="Filter" variant="outlined" @click="backHome"/>
-        </div>
+  <div v-show="isNumberEnterStep" class="flex flex-col items-center justify-center h-screen bg-pink-100 p-4 md:p-8 no-double-tap-zoom">
+    <div class="absolute top-0 left-0 m-4 w-full">
+        <Button class="text-white" icon="pi pi-home" rounded aria-label="Filter" variant="outlined" @click="backHome"/>
+    </div>
     <header class="text-4xl font-bold text-gray-700 mb-6 text-center">
       <span>NAILS MATE</span>
       <span class="mx-2">|</span>
@@ -198,6 +198,12 @@ const checkInAction = async () => {
 </script>
 
 <style scoped>
+.no-double-tap-zoom {
+  touch-action: manipulation;
+  -webkit-touch-callout: none;
+  -webkit-text-size-adjust: none;
+}
+
 .points {
   font-size: calc(2vw + 2rem);
 }
