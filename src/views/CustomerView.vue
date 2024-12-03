@@ -338,8 +338,6 @@
           <Button label="Confirm" icon="pi pi-check" @click="confirmDeleteAccount" />
         </template>
       </Dialog>
-      <SectionTitleLineWithButton :icon="mdiAccountGroup" title="Customer" main>
-      </SectionTitleLineWithButton>
       <div class="h-full">
         <div class="hidden sm:inline">
           <div
@@ -352,8 +350,8 @@
         </div>
         <ScrollPanel
           v-if="customers.length > 0"
-          style="width: 100%; height: 60vh"
-          class="overflow-hidden"
+          style="width: 100%;"
+          class="overflow-hidden sm:h-[65vh]"
         >
           <div v-for="customer in customers" v-bind:key="customer.id">
             <Card

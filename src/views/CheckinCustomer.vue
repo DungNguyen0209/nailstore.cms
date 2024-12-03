@@ -1,5 +1,8 @@
 <template>
   <div v-show="isNumberEnterStep" class="flex flex-col items-center justify-center h-screen bg-pink-100 p-4 md:p-8">
+    <div class="absolute top-0 left-0 m-4">
+          <Button class="text-white" icon="pi pi-home" rounded aria-label="Filter" variant="outlined" @click="backHome"/>
+        </div>
     <header class="text-4xl font-bold text-gray-700 mb-6 text-center">
       <span>NAILS MATE</span>
       <span class="mx-2">|</span>
@@ -53,7 +56,7 @@
       </label>
     </footer>
   </div>
-  <div class="background-container">
+  <div v-show="!isNumberEnterStep" class="background-container">
     <CardBox bgColor="bg-pink-100" class="cursor-pointer md:w-3/5 lg:w-5/12 md:h-h-2/5 lg:h-3/5 shadow-2xl md:mx-auto"
       is-hoverable>
       <header class="text-2xl font-bold tracking-wider text-gray-900 mb-12 flex justify-center items-center space-x-4">
@@ -72,7 +75,7 @@
           <label for="on_label" class="font-arial text-sm">Email</label>
         </FloatLabel>
         <div class="flex flex-row justify-center space-x-4">
-          <Button label="Zurück" class="w-32" />
+          <Button label="Zurück" class="w-32"  @click="() => isNumberEnterStep = true"/>
           <Button label=" Einchecken" @click="checkInAction" class=" bg-slate-400 w-32" />
         </div>
       </div>
@@ -98,7 +101,7 @@ import { useMasterDataStore } from "@/stores/masterData";
 import { useRouter } from 'vue-router';
 
 const router = useRouter()
-const { confirmCreateCheckInCustomer, showErrorCommonMessage } = useToastMessage();
+const { confirmCreateCheckInCustomer, showCommonErrorMessage } = useToastMessage();
 const points = ref(400);
 const enteredValue = ref("");
 const numbers = [1, 2, 3, 4, 5, 6, 7, 8, 9, 0];
@@ -121,27 +124,35 @@ const deleteLast = () => {
 };
 
 const nextAction = async () => {
-  await geUserByPhone(enteredValue.value)
-    .then((res) => {
-      if (res.data) {
-        console.log("res", res.data);
-        account.value = new Account(res.data);
-        isNumberEnterStep.value = false;
-      }
-    })
-    .catch((err) => {
-      if (err.status === 404 && err.response.data.errorCode == ErrorCode.NotFound) {
-        confirmCreateCheckInCustomer(() => {
-          account.value = new Account({ phone: enteredValue.value });
-          isNewAccount.value = true;
+  if(acceptedTerms.value){
+    await geUserByPhone(enteredValue.value)
+      .then((res) => {
+        if (res.data) {
+          console.log("res", res.data);
+          account.value = new Account(res.data);
           isNumberEnterStep.value = false;
-        }, () => { });
-      }
-      else {
-        console.log("err", err);
-        showErrorCommonMessage("Error", "Retry again");
-      }
-    });
+        }
+      })
+      .catch((err) => {
+        if (err.status === 404 && err.response.data.errorCode == ErrorCode.NotFound) {
+          confirmCreateCheckInCustomer(() => {
+            account.value = new Account({ phone: enteredValue.value });
+            isNewAccount.value = true;
+            isNumberEnterStep.value = false;
+          }, () => { });
+        }
+        else {
+          showCommonErrorMessage("Error", "Retry again");
+        }
+      });
+  }
+  else{
+    showCommonErrorMessage("Error", "Please accept the terms");
+  }
+};
+
+const backHome = () => {
+  router.push('/');
 };
 
 const checkInAction = async () => {

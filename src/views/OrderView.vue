@@ -260,7 +260,8 @@
       staffs.value =
         resp.data.map((s) => ({
           code: s.id,
-          name: s.fullName + '___' + s.numberOrder
+          value: s.numberOrder,
+          name: s.fullName
         })) || []
       if (
         reflectSelectedOrder.value.workerService != null &&
@@ -529,6 +530,10 @@
         showCommonErrorMessage('Error Message', 'Can not auto assign order')
       })
   }
+  const getValue = (node) => {
+   console.log("===",node)
+  }
+
 </script>
 
 <template>
@@ -919,79 +924,99 @@
               >Add new Service</Button
             >
           </div>
-          <DataTable :value="reflectSelectedOrder.workerService" class="custom-datatable">
-            <Column field="status" header="Staff" class="w-full sm:w-1/4">
+            <DataTable :value="reflectSelectedOrder.workerService" class="custom-datatable">
+            <Column field="status" header="Staff" class="sm:w-1/4">
               <template #body="slotProps">
-                <FloatLabel class="w-full md:w-56 mt-3">
-                  <Select
-                    :invalid="isInvalidWorker(slotProps.data.worker.code)"
-                    :disabled="disableEdit"
-                    id="over_label"
-                    v-model="slotProps.data.worker"
-                    :options="staffs"
-                    optionLabel="name"
-                    class="w-full text-sm"
-                  />
-                  <label class="text-sm" for="over_label">Staff</label>
-                </FloatLabel>
+              <FloatLabel class="w-full md:w-56 mt-3">
+                <Select
+                :invalid="isInvalidWorker(slotProps.data.worker.code)"
+                :disabled="disableEdit"
+                id="over_label"
+                v-model="slotProps.data.worker"
+                :options="staffs"
+                placeholder="Staff" 
+                optionLabel="name"
+                class="w-full text-sm min-h-4"
+                >
+                  <template #value="option">
+                    <div class="flex flex-row justify-between">
+                      <span class="font-light">{{ option.value.name ?? "Staff" }}</span>
+                      <span class="font-medium">{{ option.value.value }}</span>
+                    </div>
+                  </template>
+                  <template #option="options">
+                    <div class="w-full flex flex-row justify-between">
+                      <span class="font-light">{{ options.option.name }}</span>
+                      <span class="font-medium">{{ options.option.value }}</span>
+                    </div>
+                  </template>
+                </Select>
+                <label class="text-sm" for="over_label">Staff</label>
+              </FloatLabel>
               </template>
             </Column>
-            <Column field="type" header="Service" class="w-full sm:w-4/5">
+            <Column field="type" header="Service" class="sm:w-4/5 ">
               <template #body="slotProps">
-                <Dialog
-                  v-model:visible="isVisibleSelectService"
-                  modal
-                  header="Services"
-                  class="w-3/4 sm:w-1/2"
+              <Dialog
+                v-model:visible="isVisibleSelectService"
+                modal
+                header="Services"
+                class="w-3/4 sm:w-1/2"
+              >
+                <Tree
+                :value="serviceOption"
+                :filter="true"
+                filterMode="lenient"
+                selectionMode="single"
+                :expandedKeys="expandedKeys"
+                class="w-full md:w-30rem"
                 >
-                  <Tree
-                    :value="serviceOption"
-                    :filter="true"
-                    filterMode="lenient"
-                    selectionMode="single"
-                    :expandedKeys="expandedKeys"
-                    class="w-full md:w-30rem"
-                  >
-                    <template #default="slotProps">
-                      <p class="font-medium">{{ slotProps.node.label }}</p>
-                    </template>
-                    <template #service="slotProps">
-                      <div class="flex flex-col sm:flex-row w-full">
-                        <div class="w-full sm:w-4/5 flex flex-row">
-                          <Checkbox
-                            v-model:model-value="slotProps.node.checked"
-                            @change="checkItem(slotProps.node)"
-                            binary
-                          />
-                          <div class="w-11/12 sm:w-full inline-block">
-                            <article class="ml-1 text-wrap">
-                              <p class="break-words font-light">{{ slotProps.node.label }}</p>
-                            </article>
-                          </div>
-                        </div>
-                        <p class="w-full sm:w-1/5 sm:ml-12 font-medium">
-                          {{ slotProps.node.data }} €
-                        </p>
-                      </div>
-                    </template>
-                  </Tree>
-                  <template #footer>
-                    <Button label="Save" @click="isVisibleSelectService = false" autofocus />
-                  </template>
-                </Dialog>
-                <div
-                  class="bg-white flex flex-wrap w-full hover:cursor-pointer p-3 border rounded-lg border-gray-300"
-                  @click="selectService(slotProps.data)"
+                <template #default="slotProps">
+                  <p class="font-medium">{{ slotProps.node.label }}</p>
+                </template>
+                <template #service="slotProps">
+                  <div class="flex flex-row w-full">
+                  <Checkbox
+                    v-model:model-value="slotProps.node.checked"
+                    @change="checkItem(slotProps.node)"
+                    binary
+                  />
+                  <div class="w-full sm:w-4/5 flex flex-col sm:flex-row">
+                    <div class="w-full sm:w-9/12 inline-block">
+                    <article class="ml-1 text-wrap">
+                      <p class="break-words font-light">{{ slotProps.node.label }}</p>
+                    </article>
+                    </div>
+                    <p class="w-full sm:w-3/12 sm:ml-12 font-medium">
+                    {{ slotProps.node.data }} €
+                    </p>
+                  </div>
+                  </div>
+                </template>
+                </Tree>
+                <template #footer>
+                <Button label="Save" @click="isVisibleSelectService = false" autofocus />
+                </template>
+              </Dialog>
+              <div
+                class="bg-white 
+                flex 
+                min-h-6
+                flex-wrap 
+                w-full hover:cursor-pointer p-3 border rounded-lg border-gray-300"
+                @click="selectService(slotProps.data)"
+                data-text="Input ...."
+              >
+                <Chip
+                v-for="service in slotProps.data.services"
+                :key="service.code"
+                class="py-0 pl-0 pr-4 m-1"
                 >
-                  <Chip
-                    v-for="service in slotProps.data.services"
-                    :key="service.code"
-                    class="py-0 pl-0 pr-4 m-1"
+                  <span
+                    class="w-1/2 bg-primary text-sm rounded-full flex items-center justify-center"
+                    >{{ service.name }}</span
                   >
-                    <span
-                      class="bg-primary text-sm rounded-full flex items-center justify-center"
-                      >{{ service.name }}</span
-                    >
+                  <div class="w-1/2">
                     <InputNumber
                       v-model="service.price"
                       :minFractionDigits="2"
@@ -1000,25 +1025,27 @@
                       inputId="currency-germany"
                       mode="currency"
                       currency="EUR"
+                     :min="0" :max="10000"
                       locale="de-DE"
                     />
+                  </div>
                   </Chip>
-                </div>
+              </div>
               </template>
             </Column>
             <Column :exportable="false" class="justify-start">
               <template #body="slotProps">
-                <Button
-                  icon="pi pi-trash"
-                  outlined
-                  rounded
-                  :disabled="disableEdit"
-                  severity="danger"
-                  @click="confirmDeleteProduct(slotProps.data)"
-                />
+              <Button
+                icon="pi pi-trash"
+                outlined
+                rounded
+                :disabled="disableEdit"
+                severity="danger"
+                @click="confirmDeleteProduct(slotProps.data)"
+              />
               </template>
             </Column>
-          </DataTable>
+            </DataTable>
           <div
             class="flex justify-start gap-4 mt-4 sticky bottom-0 end-0 w-full p-4 border border-slate-400 bg-white"
           >
@@ -1060,4 +1087,11 @@
     border-width: 1.5px;
     /* Adjust the value as needed */
   }
+  :deep(.p-inputnumber-input) {
+    width: 100%;
+  }
+  div:empty:not(:focus):before {
+	content: attr(data-text);
+  color: #999999;
+}
 </style>

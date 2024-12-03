@@ -2,6 +2,9 @@
     <ConfettiExplosion :particleCount="200" :shouldDestroyAfterDone="true" />
     <div class="js-container container w-full" style="top:0px !important;">
       <div class="flex flex-col items-center justify-center w-screen h-screen bg-pink-100 p-4 md:p-8">
+        <div class="absolute top-0 left-0 m-4">
+          <Button class="" icon="pi pi-home" rounded aria-label="Filter" variant="outlined" @click="backHome"/>
+        </div>
         <header class="text-4xl font-bold text-gray-700 mb-6 text-center">
           <span>NAILS MATE</span>
           <span class="mx-2">|</span>
@@ -40,6 +43,10 @@
   })
   const backCheckin = () => {
     router.push('/checkin-customer');
+  }
+
+    const backHome = () => {
+    router.push('/');
   }
   </script>
   
