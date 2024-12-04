@@ -42,6 +42,9 @@ app.use(ConfirmationService);
 app.use(PrimeVue, {
   theme: {
       preset: Aura,
+      options: {
+        darkModeSelector: false || 'none',
+    }
   }
 })
 changePrimaryColor();

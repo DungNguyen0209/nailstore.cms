@@ -226,6 +226,15 @@
               autocomplete="off"
             />
           </div>
+          <div class="flex items-center gap-4 mb-4">
+            <label for="username" class="font-semibold w-24">Phone</label>
+            <InputText
+              v-model="selectedCustomer.phone"
+              id="username"
+              class="flex-auto"
+              autocomplete="off"
+            />
+          </div>
           <div class="flex items-center gap-4 mb-2">
             <label for="email" class="font-semibold w-24">Address</label>
             <Textarea
