@@ -407,6 +407,9 @@
       selectedOrder.value.order.status === OrderStatus.Open
         ? OrderStatus.Processing
         : OrderStatus.Payment
+    if (reflectSelectedOrder.value != selectedOrder.value) {
+      await saveOrderInformation()
+    }
     await UpdateOrderStatus(selectedOrder.value.order.id, status)
       .then(async () => {
         if (status === OrderStatus.Payment) {
@@ -506,24 +509,24 @@
 
   const CheckOut = async () => {
     let workerService = getPaymentServiceWorker()
-    await updateOrderInfo(
-      {
-        id: selectedOrder.value.order.id,
-        note: selectedOrder.value.note
-      },
-      workerService
-    ).then(async () => {
-      await CheckoutOrder(
-        selectedOrder.value.order.id,
-        parseFloat(totalPrice.value),
-        creditPoint.value.usingPoint,
-        creditPoint.value.discount,
-        selectedOrder.value.note
-      ).then(() => {
-        selectedOrder.value.order.status = OrderStatus.Done
+    if (reflectSelectedOrder.value != selectedOrder.value) {
+      await saveOrderInformation()
+    }
+    await CheckoutOrder(
+      selectedOrder.value.order.id,
+      parseFloat(totalPrice.value),
+      creditPoint.value.usingPoint,
+      creditPoint.value.discount,
+      selectedOrder.value.note
+    )
+      .then(() => {
         showSuccessUpdateOrder()
+        selectedOrder.value.order.status = OrderStatus.Done
+        visibleEdit.value = false
       })
-    })
+      .catch(() => {
+        showCommonErrorMessage('Error Message', 'Can not check out order')
+      })
   }
 
   function checkServiceOption(option, selectedServices) {
@@ -598,7 +601,7 @@
         @hide="refreshDetailInfor"
         :header="billInfo != null ? 'Payment Checkout' : 'Detail Order'"
       >
-        <div v-if="billInfo != null">
+        <div v-if="billInfo != null || selectedOrder.order.status == OrderStatus.Done">
           <VeeForm :validation-schema="schema">
             <div class="flex flex-col sm:flex-row">
               <div class="sm:basis-4/6 w-full">
