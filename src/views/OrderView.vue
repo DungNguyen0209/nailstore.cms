@@ -520,6 +520,7 @@
         creditPoint.value.discount,
         selectedOrder.value.note
       ).then(() => {
+        selectedOrder.value.order.status = OrderStatus.Done
         showSuccessUpdateOrder()
       })
     })
