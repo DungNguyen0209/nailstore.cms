@@ -6,6 +6,7 @@
   import Skeleton from 'primevue/skeleton'
 
   const confirm = useConfirm()
+  const keyWord = ref('')
   const props = defineProps({
     checkable: Boolean,
     services: {
@@ -17,7 +18,7 @@
     isloading: Boolean
   })
 
-  const emit = defineEmits(['changePaging', 'editService', 'deleteService'])
+  const emit = defineEmits(['changePaging', 'editService', 'deleteService', 'onInputChange'])
 
   const formatCurrency = (value) => {
     if (value) return '€' + value
@@ -30,6 +31,10 @@
 
   const editProduct = (service) => {
     emit('editService', service)
+  }
+
+  const inputKeyWord = (value) => {
+    emit('onInputChange', value)
   }
 
   const selectedService = ref(null)
@@ -74,11 +79,11 @@
   >
     <template #header>
       <div class="flex flex-wrap gap-2 items-center justify-between">
-        <IconField>
+        <IconField class="w-1/2">
           <InputIcon>
             <i class="pi pi-search" />
           </InputIcon>
-          <InputText placeholder="Search..." />
+          <InputText @value-change="inputKeyWord" v-model="keyWord" placeholder="Search..." />
         </IconField>
       </div>
     </template>

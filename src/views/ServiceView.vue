@@ -45,7 +45,7 @@
 
   const modalCreateActive = ref(false)
   const modalCategoryCreateActive = ref(false)
-
+  const keyWord = ref(null)
   const newService = ref(createService())
   const newCategory = ref(new BaseMasterData())
   const dropDown = ref(true)
@@ -58,13 +58,12 @@
   const isUpdate = ref(false)
 
   onMounted(async () => {
-    refreshInfor()
     await queryService()
   })
 
   async function queryService() {
     masterData.setComponentLoading(true)
-    await getListService({ pageSize: currentPageSize.value, pageNumber: 1 })
+    await getListService({ pageSize: currentPageSize.value, pageNumber: 1, keyWord: keyWord.value })
       .then((response) => {
         services.value = response.data?.services?.map((serviceData) => createService(serviceData))
         currentPageSize.value = response.data?.pageSize
@@ -290,6 +289,16 @@
         showCommonErrorMessage('Delete Service', error)
       })
   }
+
+  let debounceTimer = null
+  const queryServiceByKeyWord = (word) => {
+    clearTimeout(debounceTimer)
+    debounceTimer = setTimeout(async () => {
+      keyWord.value = word
+      await queryService()
+      keyWord.value = null
+    }, 1000)
+  }
 </script>
 
 <template>
@@ -449,6 +458,7 @@
           :isloading="masterData.isComponentLoading"
           :total-records="totalRecords"
           @changePaging="changePagingService"
+          @on-input-change="(e) => queryServiceByKeyWord(e)"
           @editService="editService"
           @deleteService="deleteService"
           :page-size="currentPageSize"

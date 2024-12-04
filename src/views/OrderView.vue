@@ -215,7 +215,11 @@
   }
 
   const refreshDetailInfor = async () => {
-    if (selectedOrder.value != reflectSelectedOrder.value || billInfo.value != reflectBill.value) {
+    if (
+      ((!!selectedOrder.value || !!billInfo.value) &&
+        selectedOrder.value != reflectSelectedOrder.value) ||
+      billInfo.value != reflectBill.value
+    ) {
       await getDefaultOrders()
     }
     newOrder.value = new Order({})
@@ -528,8 +532,9 @@
     option.checked = selectedServices.some((s) => s.code === option.key)
   }
 
-  const selectService = async (selectedItem) => {
+  const selectService = (selectedItem) => {
     masterData.setIsLoading(true)
+    selectService.value = new Set()
     selectedWorkerService.value = selectedItem
     serviceOption.value.forEach((option) => {
       checkServiceOption(option, selectedWorkerService.value.services || [])
@@ -546,6 +551,7 @@
     if (node.type === 'service' && !node.checked) {
       selectedService.value.delete(node.key)
     }
+    console.log('selectedService', selectedService.value)
   }
 
   async function autoAssignTask() {
