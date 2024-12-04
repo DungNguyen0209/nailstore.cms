@@ -156,9 +156,19 @@
     selectedService,
     (newValue) => {
       if (newValue != null && !!services.value.length) {
+        var existedServiceId = new Set()
         selectedWorkerService.value.services = services.value?.filter((x) => {
-          return newValue.has(x.code)
+          if (newValue.has(x.code)) {
+            existedServiceId.add(x.code)
+            return true
+          }
+          return false
         })
+
+        var newService = services.value.filter((x) => {
+          return newValue.has(x.code) && !existedServiceId.has(x.code)
+        })
+        selectedWorkerService.value.services.push(...newService)
       }
     },
     { immediate: true, deep: true }
