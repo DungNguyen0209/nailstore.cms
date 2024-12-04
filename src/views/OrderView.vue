@@ -534,7 +534,7 @@
 
   const selectService = (selectedItem) => {
     masterData.setIsLoading(true)
-    selectedService.value = new Set()
+    selectedService.value = new Set(selectedItem.services.map((x) => x.code))
     selectedWorkerService.value = selectedItem
     serviceOption.value.forEach((option) => {
       checkServiceOption(option, selectedWorkerService.value.services || [])
