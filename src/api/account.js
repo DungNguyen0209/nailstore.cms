@@ -1,21 +1,21 @@
 import api from './api'
 import Account from '@/types/Account'
 
-export async function getAccountByFilter({ pageSize, pageNumber, role, keyword }) {
+export async function getAccountByFilter({ pageSize, pageNumber, role, keyWord }) {
   return await api.post('api/accounts/getAccount', {
     pageSize: pageSize,
     pageNumber: pageNumber,
     type: role,
-    keyword: keyword
+    keyWord: keyWord
   })
 }
 
-export async function getStaffByFilter({ pageSize, pageNumber, role, keyword }) {
+export async function getStaffByFilter({ pageSize, pageNumber, role, keyWord }) {
   return await api.post('api/accounts/staff', {
     pageSize: pageSize,
     pageNumber: pageNumber,
     type: role,
-    keyword: keyword
+    keyWord: keyWord
   })
 }
 

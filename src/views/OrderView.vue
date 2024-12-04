@@ -331,7 +331,7 @@
             })) || [],
           note: resp.data?.order.note
         }
-        reflectSelectedOrder.value = selectedOrder.value
+        reflectSelectedOrder.value = { ...selectedOrder.value }
       })
       .catch(() => {
         showCommonErrorMessage('Error Message', 'Can not get detail order')
@@ -342,7 +342,7 @@
     await getPaymentDetail(id)
       .then((response) => {
         billInfo.value = new Bill(response.data)
-        reflectBill.value = billInfo.value
+        reflectBill.value = { ...billInfo.value }
       })
       .catch(() => {
         visibleEdit.value = false

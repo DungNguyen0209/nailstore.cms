@@ -25,6 +25,9 @@
   import Column from 'primevue/column'
   import Chip from 'primevue/chip'
   import Tag from 'primevue/tag'
+  import IconField from 'primevue/iconfield';
+  import InputIcon from 'primevue/inputicon';
+  import Skeleton from 'primevue/skeleton';
 
   const masterData = useMasterDataStore()
   const confirm = useConfirm()
@@ -32,7 +35,7 @@
   const pageSize = ref(10)
   const pageNumber = ref(1)
   const totalRecords = ref(0)
-  const keyWord = ref('')
+  const keyWord = ref(null)
   const { showCommonErrorMessage, showCommonSuccessMessage } = useToastMessage()
   const selectedCustomer = ref(new Account())
   const detailInformation = ref(false)
@@ -52,6 +55,7 @@
   onMounted(async () => {
     masterData.setIsLoading(true)
     await queryCustomers()
+    masterData.setIsLoading(false)
   })
 
   async function updateAccountDetail() {
@@ -107,12 +111,12 @@
   }
 
   async function queryCustomers() {
-    masterData.setIsLoading(true)
+    masterData.setComponentLoading(true)
     customers.value = await getAccountByFilter({
       role: [Role.Guest],
       pageSize: pageSize.value,
+      keyWord: keyWord.value,
       pageNumber: pageNumber.value,
-      keyWord: keyWord.value
     })
       .then((res) => {
         totalRecords.value = res.data.total
@@ -123,7 +127,7 @@
         showCommonErrorMessage('Error', 'Retry again')
       })
       .finally(() => {
-        masterData.setIsLoading()
+        masterData.setComponentLoading(false)
       })
   }
 
@@ -156,6 +160,19 @@
   const onRowCollapse = (event) => {
     delete expandedRows.value[event.data.id]
   }
+
+  let debounceTimer = null;
+
+  const onInputChange = () => {
+    // Clear the previous debounce timer
+    clearTimeout(debounceTimer);
+
+    // Set a new debounce timer
+    debounceTimer = setTimeout(async () => {
+      await queryCustomers()
+    }, 1000);
+  };
+
 </script>
 
 <template>
@@ -339,6 +356,12 @@
         </template>
       </Dialog>
       <div class="h-full">
+        <IconField class="w-1/2">
+              <InputIcon>
+                  <i class="pi pi-search" />
+              </InputIcon>
+              <InputText fluid v-model="keyWord" @value-change="onInputChange" placeholder="Keyword Search" />
+          </IconField>
         <div class="hidden sm:inline">
           <div
             class="h-14 sticky top-16 flex flex-row mt-5 font-semibold bg-gray-300 dark:bg-slate-800 z-10 dark:text-slate-100 rounded-md"
@@ -353,72 +376,84 @@
           style="width: 100%;"
           class="overflow-hidden sm:h-[65vh]"
         >
-          <div v-for="customer in customers" v-bind:key="customer.id">
-            <Card
-              class="relative overflow-hidden h-full mb-3 hover:shadow-lg hover:transition-all duration-500 cursor-pointer"
-              @click="() => selectCustomer(customer)"
-            >
-              <template #title>
-                <Tag
-                  :value="customer?.tier?.label"
-                  :style="{
-                    '--tag-bg-color': `#${customer?.tier?.value}`,
-                    '--p-tag-font-weight': 400
-                  }"
-                  class="absolute transform rotate-45 custom-tag text-center font-light !important py-1 right-[-40px] top-[18px] w-[170px]"
-                >
-                </Tag>
-                <div class="h-full relative">
-                  <span>{{ customer.fullName }}</span>
+        <div v-if= "masterData.isComponentLoading" class="card">
+          <div v-for="n in 2" :key="n" class="rounded border border-surface-200 dark:border-surface-700 p-6 bg-surface-0 dark:bg-surface-900">
+              <div class="flex mb-4">
+                <div>
+                    <Skeleton width="10rem" class="mb-2"></Skeleton>
+                    <Skeleton width="5rem" class="mb-2"></Skeleton>
+                    <Skeleton height=".5rem"></Skeleton>
                 </div>
-              </template>
-              <template #content>
-                <div class="flex sm:flex-row flex-col text-center gap-1">
-                  <div class="flex flex-col w-2/6 gap-2">
-                    <div class="flex flex-row gap-2">
-                      <i class="pi pi-envelope content-center"></i>
-                      <span>{{ customer.email }}</span>
-                    </div>
-                    <div class="flex flex-row gap-2">
-                      <i class="pi pi-phone content-center"></i>
-                      <a href="#" class="no-underline hover:underline text-blue-500">{{
-                        customer.phone
-                      }}</a>
-                    </div>
-                  </div>
-                  <div
-                    class="sm:w-1/6 w-full text-left sm:text-center content-center font-bold text-lg"
-                  >
-                    <span class="inline sm:hidden">Credit Point:</span>
-                    <span class="ml-3 sm:m-0">
-                      {{
-                        Array.isArray(customer?.creditPoints)
-                          ? customer.creditPoints.find(
-                              (point) => point.type === CreditPointType.Availabe
-                            )?.value
-                          : 0
-                      }}
-                    </span>
-                  </div>
-                  <span
-                    style="word-break: break-word; white-space: normal"
-                    class="text-wrap w-2/6 text-center content-center"
-                    >{{ customer.address }}</span
-                  >
-                  <div class="sm:w-1/6 w-full content-center text-center align-middle">
-                    <Button
-                      icon="pi pi-trash"
-                      outlined
-                      rounded
-                      severity="danger"
-                      class="border-3"
-                      @click.stop="openDeleteConfirm(customer)"
-                    />
-                  </div>
-                </div>
-              </template>
-            </Card>
+            </div>
+              <Skeleton width="100%" height="150px"></Skeleton>
           </div>
+        </div>
+        <div v-else v-for="customer in customers" v-bind:key="customer.id">
+          <Card
+            class="relative overflow-hidden h-full mb-3 hover:shadow-lg hover:transition-all duration-500 cursor-pointer"
+            @click="() => selectCustomer(customer)"
+          >
+            <template #title>
+              <Tag
+                :value="customer?.tier?.label"
+                :style="{
+                  '--tag-bg-color': `#${customer?.tier?.value}`,
+                  '--p-tag-font-weight': 400
+                }"
+                class="absolute transform rotate-45 custom-tag text-center font-light !important py-1 right-[-40px] top-[18px] w-[170px]"
+              >
+              </Tag>
+              <div class="h-full relative">
+                <span>{{ customer.fullName }}</span>
+              </div>
+            </template>
+            <template #content>
+              <div class="flex sm:flex-row flex-col text-center gap-1">
+                <div class="flex flex-col w-2/6 gap-2">
+                  <div class="flex flex-row gap-2">
+                    <i class="pi pi-envelope content-center"></i>
+                    <span>{{ customer.email }}</span>
+                  </div>
+                  <div class="flex flex-row gap-2">
+                    <i class="pi pi-phone content-center"></i>
+                    <a href="#" class="no-underline hover:underline text-blue-500">{{
+                      customer.phone
+                    }}</a>
+                  </div>
+                </div>
+                <div
+                  class="sm:w-1/6 w-full text-left sm:text-center content-center font-bold text-lg"
+                >
+                  <span class="inline sm:hidden">Credit Point:</span>
+                  <span class="ml-3 sm:m-0">
+                    {{
+                      Array.isArray(customer?.creditPoints)
+                        ? customer.creditPoints.find(
+                            (point) => point.type === CreditPointType.Availabe
+                          )?.value
+                        : 0
+                    }}
+                  </span>
+                </div>
+                <span
+                  style="word-break: break-word; white-space: normal"
+                  class="text-wrap w-2/6 text-center content-center"
+                  >{{ customer.address }}</span
+                >
+                <div class="sm:w-1/6 w-full content-center text-center align-middle">
+                  <Button
+                    icon="pi pi-trash"
+                    outlined
+                    rounded
+                    severity="danger"
+                    class="border-3"
+                    @click.stop="openDeleteConfirm(customer)"
+                  />
+                </div>
+              </div>
+            </template>
+          </Card>
+        </div>
         </ScrollPanel>
         <Paginator
           :template="{

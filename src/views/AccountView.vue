@@ -31,6 +31,9 @@
   import User from '@/types/User'
   import BaseButton from '@/components/BaseButton.vue'
   import { mdiGithub } from '@mdi/js'
+  import IconField from 'primevue/iconfield';
+  import InputIcon from 'primevue/inputicon';
+  import Skeleton from 'primevue/skeleton';
 
   const masterData = useMasterDataStore()
   const accounts = ref([new Account()])
@@ -73,7 +76,9 @@
     )
   })
   onMounted(async () => {
+    masterData.setIsLoading(true)
     await queryAccounts()
+    masterData.setIsLoading(false)
   })
 
   async function saveDetailInformation() {
@@ -167,7 +172,7 @@
   }
 
   async function queryAccounts() {
-    masterData.setIsLoading(true)
+    masterData.setComponentLoading(true)
     await getStaffByFilter({
       role: [Role.Staff, Role.Manager, Role.Cashier],
       pageSize: pageSize.value,
@@ -182,7 +187,7 @@
         showCommonErrorMessage('Error', 'Retry again')
       })
       .finally(() => {
-        masterData.setIsLoading()
+        masterData.setComponentLoading(false)
       })
   }
 
@@ -202,6 +207,14 @@
         })
     }
   }
+
+  let debounceTimer = null;
+  const onInputChange = () => {
+    clearTimeout(debounceTimer);
+    debounceTimer = setTimeout(async () => {
+      await queryAccounts()
+    }, 1000);
+  };
 </script>
 
 <template>
@@ -509,17 +522,35 @@
         />
       </SectionTitleLineWithButton>
       <div class="h-full">
+        <IconField class="w-1/2 mt-2">
+            <InputIcon>
+                <i class="pi pi-search" />
+            </InputIcon>
+            <InputText fluid v-model="keyWord" @value-change="onInputChange" placeholder="Keyword Search" />
+        </IconField>
         <div class="hidden sm:inline">
           <div
-            class="h-14 sticky top-16 flex flex-row mt-5 font-semibold bg-gray-300 dark:bg-slate-800 z-10 dark:text-slate-100 rounded-md"
+            class="h-14 sticky top-16 flex flex-row mt-2 font-semibold bg-gray-300 dark:bg-slate-800 z-10 dark:text-slate-100 rounded-md"
           >
             <span class="w-2/6 ml-2 content-center">Name</span>
             <span class="w-1/6 text-center content-center">Role</span>
             <span class="w-2/6 text-center content-center">Address</span>
           </div>
         </div>
-        <ScrollPanel style="width: 100%" class="overflow-hidden sm:h-[65vh]">
-          <div v-for="account in accounts" v-bind:key="account.id">
+        <ScrollPanel style="width: 100%" class="overflow-hidden sm:h-[60vh]">
+          <div v-if= "masterData.isComponentLoading" class="card">
+            <div v-for="n in 2" :key="n" class="rounded border border-surface-200 dark:border-surface-700 p-6 bg-surface-0 dark:bg-surface-900">
+                <div class="flex mb-4">
+                  <div>
+                      <Skeleton width="10rem" class="mb-2"></Skeleton>
+                      <Skeleton width="5rem" class="mb-2"></Skeleton>
+                      <Skeleton height=".5rem"></Skeleton>
+                  </div>
+              </div>
+                <Skeleton width="100%" height="150px"></Skeleton>
+            </div>
+          </div>
+          <div v-else v-for="account in accounts" v-bind:key="account.id">
             <Card
               class="h-full mb-3 hover:shadow-lg hover:transition-all duration-500 cursor-pointer"
               @click="() => selectAccount(account)"
