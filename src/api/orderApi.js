@@ -61,14 +61,15 @@ export async function UpdateOrderStatus(orderId, status) {
   })
 }
 
-export async function CheckoutOrder(orderId, totalPrice, creditPoint, creditPointPrice, note) {
+export async function CheckoutOrder(orderId, totalPrice, creditPoint, creditPointPrice, note, orderInfo) {
   return await api.post(`api/orders/checkoutOrder`, {
     orderId: orderId,
     totalPrice: parseFloat(totalPrice),
     creditPoint: creditPoint,
     creditPointPrice: parseFloat(creditPointPrice),
     promotion : null,
-    note: note
+    note: note,
+    orderInfo: orderInfo
   })
 }
 

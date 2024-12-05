@@ -164,7 +164,6 @@
           }
           return false
         })
-
         var newService = services.value.filter((x) => {
           return newValue.has(x.code) && !existedServiceId.has(x.code)
         })
@@ -173,6 +172,7 @@
     },
     { immediate: true, deep: true }
   )
+
   const acceptDiscount = ref(false)
 
   const masterData = useMasterDataStore()
@@ -417,31 +417,25 @@
       selectedOrder.value.order.status === OrderStatus.Open
         ? OrderStatus.Processing
         : OrderStatus.Payment
-    if (reflectSelectedOrder.value != selectedOrder.value) {
-      await saveOrderInformation()
-    }
-    await UpdateOrderStatus(selectedOrder.value.order.id, status)
+
+    await saveOrderInformation(status)
       .then(async () => {
         if (status === OrderStatus.Payment) {
           await getOrderInformation(selectedOrder.value.order.id)
-        } else {
-          selectedOrder.value.order.status = status
-        }
-        if (status === OrderStatus.Done) {
+        } else if (status === OrderStatus.Done) {
           selectedOrder.value = null
           getBillInformation(selectedOrder.value.order.id)
         }
-        showSuccessUpdateOrder()
       })
-      .catch(() => {
-        showCommonErrorMessage('Error Message', 'Can not update order')
-      })
+      .catch(() => {})
   }
 
-  async function saveOrderInformation() {
-    await updateOrderInfo(
+  async function saveOrderInformation(status) {
+    console.log('status====', status ?? selectedOrder.value.order.status)
+    return await updateOrderInfo(
       {
         id: selectedOrder.value.order.id,
+        status: status ?? selectedOrder.value.order.status,
         note: selectedOrder.value.note
       },
       selectedOrder.value.workerService.map((x) => ({
@@ -453,6 +447,7 @@
       }))
     )
       .then(() => {
+        selectedOrder.value.order.status = status ?? selectedOrder.value.order.status
         showSuccessUpdateOrder()
       })
       .catch(() => {
@@ -518,16 +513,17 @@
   }
 
   const CheckOut = async () => {
-    let workerService = getPaymentServiceWorker()
-    if (reflectSelectedOrder.value != selectedOrder.value) {
-      await saveOrderInformation()
-    }
     await CheckoutOrder(
       selectedOrder.value.order.id,
       parseFloat(totalPrice.value),
       creditPoint.value.usingPoint,
       creditPoint.value.discount,
-      selectedOrder.value.note
+      selectedOrder.value.note,
+      selectedOrder.value.serviceWorker.map((x) => ({
+        workerId: x.worker.code,
+        serviceId: x.service.code,
+        price: parseFloat(x.totalPrice)
+      }))
     )
       .then(() => {
         showSuccessUpdateOrder()

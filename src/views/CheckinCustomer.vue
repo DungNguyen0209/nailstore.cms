@@ -147,7 +147,7 @@
   const points = ref(400)
   const enteredValue = ref('')
   const numbers = [1, 2, 3, 4, 5, 6, 7, 8, 9, 0]
-  const acceptedTerms = ref(false)
+  const acceptedTerms = ref(true)
   const isNumberEnterStep = ref(true)
   const account = ref(new Account({}))
   const isNewAccount = ref(false)
