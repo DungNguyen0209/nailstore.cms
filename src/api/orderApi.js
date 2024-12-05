@@ -69,7 +69,7 @@ export async function CheckoutOrder(orderId, totalPrice, creditPoint, creditPoin
     creditPointPrice: parseFloat(creditPointPrice),
     promotion : null,
     note: note,
-    orderInfo: orderInfo
+    workerService: orderInfo
   })
 }
 
