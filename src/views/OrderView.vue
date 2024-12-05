@@ -431,7 +431,6 @@
   }
 
   async function saveOrderInformation(status) {
-    console.log('status====', status ?? selectedOrder.value.order.status)
     return await updateOrderInfo(
       {
         id: selectedOrder.value.order.id,
@@ -459,7 +458,8 @@
     await updateOrderInfo(
       {
         id: selectedOrder.value.order.id,
-        note: selectedOrder.value.note
+        note: selectedOrder.value.note,
+        status: selectedOrder.value.order.status
       },
       getPaymentServiceWorker()
     )
@@ -561,7 +561,6 @@
     if (node.type === 'service' && !node.checked) {
       selectedService.value.delete(node.key)
     }
-    console.log('selectedService', selectedService.value)
   }
 
   async function autoAssignTask() {
