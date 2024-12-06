@@ -170,7 +170,7 @@
     (newValue) => {
       if (newValue != null && !!services.value.length) {
         var existedServiceId = new Set()
-        selectedWorkerService.value.services = services.value?.filter((x) => {
+        selectedWorkerService.value.services = selectedWorkerService.value?.services.filter((x) => {
           if (newValue.has(x.code)) {
             existedServiceId.add(x.code)
             return true
@@ -316,15 +316,13 @@
           value: s.numberOrder,
           name: s.fullName
         })) || []
-      if (selectedOrder.value.workerService != null && selectedOrder.value.workerService?.length > 0)
-        staffs.value.push(...selectedOrder.value.workerService?.map((x) => x.worker))
     })
     visibleEdit.value = true
     masterData.setIsLoading(false)
   }
 
   async function getOrderInformation(id) {
-    await getOrderDetail(id)
+    return await getOrderDetail(id)
       .then((resp) => {
         selectedOrder.value = {
           order: resp.data?.order,
@@ -404,7 +402,7 @@
     selectedOrder.value.workerService.push({
       worker: {
         code: isManager.value ? null : masterData.userInfo.accountId,
-        name: isManager.value ? null : masterData.userInfo.fullName
+        name: staffs.value.find((x) => x.code === masterData.userInfo.accountId)?.name
       },
       services: []
     })
@@ -447,6 +445,7 @@
   }
 
   async function saveOrderInformation(status) {
+    masterData.setIsLoading(true)
     return await updateOrderInfo(
       {
         id: selectedOrder.value.order.id,
@@ -467,6 +466,9 @@
       })
       .catch(() => {
         showCommonErrorMessage('Error Message', 'Can not update order')
+      })
+      .finally(() => {
+        masterData.setIsLoading(false)
       })
   }
 
@@ -572,6 +574,10 @@
   }
 
   const selectService = (selectedItem) => {
+    console.log('selectedItem:', selectedItem.worker.code, !isAllowEidt(selectedItem.worker.code))
+    if (!isAllowEidt(selectedItem.worker.code)) {
+      return
+    }
     masterData.setIsLoading(true)
     selectedService.value = new Set(selectedItem.services.map((x) => x.code))
     selectedWorkerService.value = selectedItem
@@ -635,7 +641,7 @@
         @hide="refreshDetailInfor"
         :header="billInfo != null ? 'Payment Checkout' : 'Detail Order'"
       >
-        <div v-if="billInfo != null || selectedOrder.order.status == OrderStatus.Done">
+        <div v-if="billInfo != null || selectedOrder?.order?.status == OrderStatus.Done">
           <VeeForm :validation-schema="schema">
             <div class="flex flex-col sm:flex-row">
               <div class="sm:basis-4/6 w-full">
@@ -802,7 +808,7 @@
             </div>
           </VeeForm>
         </div>
-        <div v-else-if="selectedOrder.order.status === OrderStatus.Payment">
+        <div v-else-if="selectedOrder?.order?.status === OrderStatus.Payment">
           <VeeForm :validation-schema="schema">
             <div class="flex flex-col sm:flex-row">
               <div class="sm:basis-4/6 w-full">
@@ -1018,9 +1024,8 @@
                 <FloatLabel class="w-full md:w-56 mt-3">
                   <Select
                     :invalid="isInvalidWorker(slotProps.data.worker.code)"
-                    :disabled="!isManager"
                     id="over_label"
-                    v-model="slotProps.data.worker"
+                    v-model="slotProps.data.worker.code"
                     :style="{
                       '--p-select-disabled-background':
                         slotProps.data.worker.code == masterData.userInfo?.accountId
@@ -1030,18 +1035,22 @@
                     :options="staffs"
                     placeholder="Staff"
                     optionLabel="name"
+                    optionValue="code"
                     class="w-full text-sm min-h-4"
                   >
                     <template #value="option">
                       <div
                         :style="{
-                          color:
-                            option.value.code == masterData.userInfo?.accountId ? 'black' : 'gray'
+                          color: option.value == masterData.userInfo?.accountId ? 'black' : 'gray'
                         }"
                         class="flex flex-row justify-between"
                       >
-                        <span class="font-light">{{ option.value.name ?? 'Staff' }}</span>
-                        <span class="font-medium">{{ option.value.value }}</span>
+                        <span class="font-normal">{{
+                          staffs.find((x) => x.code == option.value).name ?? 'Staff'
+                        }}</span>
+                        <span class="font-medium">{{
+                          staffs.find((x) => x.code == option.value).value
+                        }}</span>
                       </div>
                     </template>
                     <template #option="options">
@@ -1058,7 +1067,7 @@
             <Column field="type" header="Service" class="sm:w-4/5">
               <template #body="slotProps">
                 <Dialog
-                  v-model:visible="isVisibleSelectService"
+                  :visible="isVisibleSelectService"
                   modal
                   header="Services"
                   class="w-full h-full"
