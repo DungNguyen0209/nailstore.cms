@@ -20,7 +20,7 @@
   import SelectButton from 'primevue/selectbutton'
   import ConfirmPopup from 'primevue/confirmpopup'
   import Bill from '@/types/Bill'
-  import { getBillOfAccount } from '@/api/billApi'
+  import { getBillOfAccount, updateBill } from '@/api/billApi'
   import DataTable from 'primevue/datatable'
   import Column from 'primevue/column'
   import Chip from 'primevue/chip'
@@ -172,6 +172,23 @@
       await queryCustomers()
     }, 1000)
   }
+
+  async function updateBillInfo(billId, note) {
+    masterData.setIsLoading(true)
+    await updateBill({
+      id: billId,
+      note: note
+    })
+      .then(() => {
+        showSuccessUpdateOrder()
+      })
+      .catch(() => {
+        showCommonErrorMessage('Error Message', 'Can not update bills')
+      })
+      .finally(() => {
+        masterData.setIsLoading()
+      })
+  }
 </script>
 
 <template>
@@ -245,7 +262,6 @@
             />
           </div>
           <div class="flex items-center gap-4 mb-2">
-            <label for="email" class="font-semibold w-24">Note</label>
             <Textarea
               v-model="selectedCustomer.note"
               id="category"
@@ -282,9 +298,9 @@
                 <div class="flex flex-wrap gap-2 items-center justify-between">
                   <IconField>
                     <InputIcon>
-                      <i class="pi pi-euro" />
+                      <i class="pi pi-euro ml-6" />
                     </InputIcon>
-                    <span class="ml-4"> {{ bills.totalPrice }}</span>
+                    <span> {{ bills.totalPrice }}</span>
                   </IconField>
                 </div>
               </template>
@@ -322,13 +338,28 @@
                       <template #body="slotProps">
                         <IconField>
                           <InputIcon>
-                            <i class="pi pi-euro" />
+                            <i class="pi pi-euro ml-2" />
                           </InputIcon>
-                          <span class="ml-1"> {{ slotProps.data.totalPrice }}</span>
+                          <span> {{ slotProps.data.totalPrice }}</span>
                         </IconField>
                       </template>
                     </Column>
                   </DataTable>
+                </div>
+                <div class="flex flex-row w-full">
+                  <Textarea
+                    v-model="slotProps.data.note"
+                    class="flex-auto h-20 dark:bg-slate-800 rounded-md w-4/5"
+                    rows="4"
+                    autocomplete="off"
+                  />
+                  <div class="w-1/5 flex items-center justify-center">
+                    <Button
+                      @click="() => updateBillInfo(slotProps.data.id, slotProps.data.note)"
+                      icon="pi pi-save"
+                      aria-label="Filter"
+                    />
+                  </div>
                 </div>
               </template>
             </DataTable>

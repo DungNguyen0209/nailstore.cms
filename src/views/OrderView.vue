@@ -247,6 +247,8 @@
     newOrder.value = new Order({})
     billInfo.value = null
     selectedOrder.value = null
+    services.value = []
+    staffs.value = null
     newOrder.value.createdBy = masterData.userInfo?.id ?? ''
     reflectSelectedOrder.value = null
     reflectBill.value = null
@@ -291,7 +293,6 @@
             checked: false
           }))
       }))
-
       serviceOption.value.forEach((element) => {
         const currentServices =
           element?.children?.map((child) => ({
@@ -497,6 +498,7 @@
       note: billInfo.value.note
     })
       .then(() => {
+        console.log('billInfo:', billInfo.value)
         showSuccessUpdateOrder()
       })
       .catch(() => {
@@ -576,7 +578,6 @@
   }
 
   const selectService = (selectedItem) => {
-    console.log('selectedItem:', selectedItem.worker.code, !isAllowEidt(selectedItem.worker.code))
     if (!isAllowEidt(selectedItem.worker.code)) {
       return
     }
@@ -594,10 +595,10 @@
   function checkItem(node) {
     if (node.type === 'service' && node.checked) {
       selectedService.value.add(node.key)
-    }
-    if (node.type === 'service' && !node.checked) {
+    } else if (node.type === 'service' && !node.checked) {
       selectedService.value.delete(node.key)
     }
+    console.log('selectedService:', selectedService.value)
   }
 
   async function autoAssignTask() {
