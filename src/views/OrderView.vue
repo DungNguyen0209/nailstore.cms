@@ -27,7 +27,6 @@
   import { getStaffForDropDown } from '@/api/userApi'
   import { getServiceForDropDown } from '@/api/serviceApi'
   import { CreditPointType, OrderStatus, Role, sortDirection } from '@/helpers/constants'
-  import { CreditPointType, OrderStatus, Role, sortDirection } from '@/helpers/constants'
   import {
     updateOrderInfo,
     getOrders,
@@ -1139,7 +1138,6 @@
                   outlined
                   rounded
                   class="item-center"
-                  :disabled="disableEdit || !isAllowEidt(slotProps.data.worker.code)"
                   :disabled="disableEdit || !isAllowEidt(slotProps.data.worker.code)"
                   severity="danger"
                   @click="confirmDeleteProduct(slotProps.data)"
