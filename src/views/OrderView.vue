@@ -402,7 +402,9 @@
     selectedOrder.value.workerService.push({
       worker: {
         code: isManager.value ? null : masterData.userInfo.accountId,
-        name: staffs.value.find((x) => x.code === masterData.userInfo.accountId)?.name
+        name: isManager.value
+          ? null
+          : staffs.value.find((x) => x.code === masterData.userInfo.accountId)?.name
       },
       services: []
     })
@@ -1046,10 +1048,10 @@
                         class="flex flex-row justify-between"
                       >
                         <span class="font-normal">{{
-                          staffs.find((x) => x.code == option.value).name ?? 'Staff'
+                          staffs.find((x) => x.code == option.value)?.name ?? 'Staff'
                         }}</span>
                         <span class="font-medium">{{
-                          staffs.find((x) => x.code == option.value).value
+                          staffs.find((x) => x.code == option.value)?.value
                         }}</span>
                       </div>
                     </template>
