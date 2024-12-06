@@ -27,6 +27,7 @@
   import { getStaffForDropDown } from '@/api/userApi'
   import { getServiceForDropDown } from '@/api/serviceApi'
   import { CreditPointType, OrderStatus, Role, sortDirection } from '@/helpers/constants'
+  import { CreditPointType, OrderStatus, Role, sortDirection } from '@/helpers/constants'
   import {
     updateOrderInfo,
     getOrders,
@@ -386,6 +387,8 @@
     })
       .then((response) => {
         totalRecords.value = response.data?.total
+        pageSize.value = response.data?.pageSize
+        currentPage.value = response.data?.pageNumber
         pageSize.value = response.data?.pageSize
         currentPage.value = response.data?.pageNumber
         orders.value = response.data?.orders?.map((orderData) => new Order(orderData))
@@ -1136,6 +1139,7 @@
                   outlined
                   rounded
                   class="item-center"
+                  :disabled="disableEdit || !isAllowEidt(slotProps.data.worker.code)"
                   :disabled="disableEdit || !isAllowEidt(slotProps.data.worker.code)"
                   severity="danger"
                   @click="confirmDeleteProduct(slotProps.data)"
