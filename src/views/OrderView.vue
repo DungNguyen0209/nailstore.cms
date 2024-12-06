@@ -26,7 +26,7 @@
   import { getOrderSeverity } from '@/helpers/order'
   import { getStaffForDropDown } from '@/api/userApi'
   import { getServiceForDropDown } from '@/api/serviceApi'
-  import { CreditPointType, OrderStatus, sortDirection } from '@/helpers/constants'
+  import { CreditPointType, OrderStatus, Role, sortDirection } from '@/helpers/constants'
   import {
     updateOrderInfo,
     getOrders,
@@ -68,6 +68,15 @@
   const disabledCheckOut = computed(() => {
     return selectedOrder.value?.order?.status === OrderStatus.Payment
   })
+
+  const isManager = computed(() => {
+    return masterData.userInfo?.scope.some((x) => x === Role.Manager)
+  })
+
+  const isAllowEidt = (workerId) => {
+    console.log("===",workerId === masterData.userInfo?.accountId)
+    return  isManager.value  || workerId === masterData.userInfo?.accountId
+  }
 
   const labelByOrderStatus = computed(() => {
     if (selectedOrder.value?.order?.status === OrderStatus.Open) {
@@ -194,7 +203,6 @@
   onMounted(async () => {
     masterData.setIsLoading(true)
     refreshDetailInfor()
-    await getDefaultOrders()
     masterData.setIsLoading(false)
   })
 
@@ -374,6 +382,8 @@
     })
       .then((response) => {
         totalRecords.value = response.data?.total
+        pageSize.value = response.data?.pageSize
+        currentPage.value = response.data?.pageNumber
         orders.value = response.data?.orders?.map((orderData) => new Order(orderData))
       })
       .catch(() => {
@@ -654,6 +664,7 @@
                                             inputId="currency-germany"
                                             mode="currency"
                                             currency="EUR"
+                                            :disabled = "!isAllowEidt(item.worker.code)"
                                             locale="de-DE"
                                             v-model="item.totalPrice"
                                             variant="filled"
@@ -797,6 +808,7 @@
                                         <div class="card flex justify-center">
                                           <InputNumber
                                             v-model="item.totalPrice"
+                                            :disabled = "!isAllowEidt(item.worker.code)"
                                             inputId="price_input"
                                             mode="currency"
                                             currency="EUR"
@@ -976,7 +988,7 @@
                 <FloatLabel class="w-full md:w-56 mt-3">
                   <Select
                     :invalid="isInvalidWorker(slotProps.data.worker.code)"
-                    :disabled="disableEdit"
+                    :disabled="!isAllowEidt(slotProps.data.worker.code)"
                     id="over_label"
                     v-model="slotProps.data.worker"
                     :options="staffs"
@@ -1063,6 +1075,7 @@
                         v-model="service.price"
                         :minFractionDigits="2"
                         @click.stop
+                        :disabled = "!isAllowEidt(slotProps.data.worker.code)"
                         size="small"
                         inputId="currency-germany"
                         mode="currency"
@@ -1083,7 +1096,7 @@
                   outlined
                   rounded
                   class="item-center"
-                  :disabled="disableEdit"
+                  :disabled="disableEdit || !isAllowEidt(slotProps.data.worker.code)"
                   severity="danger"
                   @click="confirmDeleteProduct(slotProps.data)"
                 />

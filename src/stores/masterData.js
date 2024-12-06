@@ -24,6 +24,15 @@ export const useMasterDataStore = defineStore('masterData', () => {
         localStorage.setItem('userInfo', userInfoString);
         userInfo.value = payload ?? [];
     }
+
+    function setScopeUserInfo(scope = null) {
+        const userInfoWithScope = { ...userInfo.value, scope };
+        console.log(JSON.parse(JSON.stringify(userInfoWithScope)));
+        const userInfoString = JSON.stringify(userInfoWithScope);
+        localStorage.setItem('userInfo', userInfoString);
+        userInfo.value = userInfoWithScope;
+    }
+        
   
     return {
     categoryService,
@@ -34,6 +43,7 @@ export const useMasterDataStore = defineStore('masterData', () => {
     setUserInfo,
     setIsLoading,
     setComponentLoading,
+    setScopeUserInfo
     }
   })
   

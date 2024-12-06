@@ -22,6 +22,8 @@ export const useAuthStore = defineStore('auth', () => {
       .then(response => {
         masterData.setCategoryService(response.data.serviceCategory);
         masterData.setUserInfo(response.data.user);
+        const { scope } = jwtDecode(response.data.token);
+        masterData.setScopeUserInfo(scope);
         setTokens(response.data.token, response.data.refreshToken);
         return true;
       })
@@ -53,6 +55,7 @@ export const useAuthStore = defineStore('auth', () => {
       return false;
     }
     const { expried } = jwtDecode(token.value);
+    
     const expriedTimestamp = Date.parse(expried);
     return expriedTimestamp > Date.now();
   };
