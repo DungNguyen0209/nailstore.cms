@@ -17,6 +17,7 @@ class Bill {
     ownerPhone,
     ownerEmail,
     isDeleted,
+    note,
     serviceWorker
   } = {}) {
     this.id = id == null ? uuidv7() : id
@@ -36,6 +37,7 @@ class Bill {
     this.ownrName = ownrName == null ? '' : ownrName
     this.ownerPhone = ownerPhone == null ? '' : ownerPhone
     this.ownerEmail = ownerEmail == null ? '' : ownerEmail
+    this.note = note == null ? '' : note
   }
 
   // Example method to format the created time

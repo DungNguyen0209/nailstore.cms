@@ -26,7 +26,7 @@
   import { getOrderSeverity } from '@/helpers/order'
   import { getStaffForDropDown } from '@/api/userApi'
   import { getServiceForDropDown } from '@/api/serviceApi'
-  import { CreditPointType, OrderStatus, sortDirection } from '@/helpers/constants'
+  import { CreditPointType, OrderStatus, Role, sortDirection } from '@/helpers/constants'
   import {
     updateOrderInfo,
     getOrders,
@@ -46,6 +46,7 @@
   import Tree from 'primevue/tree'
   import Dialog from 'primevue/dialog'
   import Chip from 'primevue/chip'
+  import { updateBill } from '@/api/billApi'
 
   const confirm = useConfirm()
   const { showCommonErrorMessage, showSuccessUpdateOrder } = useToastMessage()
@@ -67,6 +68,18 @@
   const expandedKeys = ref({})
   const disabledCheckOut = computed(() => {
     return selectedOrder.value?.order?.status === OrderStatus.Payment
+  })
+
+  const isManager = computed(() => {
+    return masterData.userInfo?.scope.some((x) => x === Role.Manager)
+  })
+
+  const isAllowEidt = (workerId) => {
+    return isManager.value || workerId === masterData.userInfo?.accountId
+  }
+
+  const isDone = computed(() => {
+    return selectedOrder.value?.order?.status === OrderStatus.Done || billInfo.value != null
   })
 
   const labelByOrderStatus = computed(() => {
@@ -193,7 +206,6 @@
   const isVisibleSelectService = ref(false)
   onMounted(async () => {
     masterData.setIsLoading(true)
-    refreshDetailInfor()
     await getDefaultOrders()
     masterData.setIsLoading(false)
   })
@@ -374,6 +386,8 @@
     })
       .then((response) => {
         totalRecords.value = response.data?.total
+        pageSize.value = response.data?.pageSize
+        currentPage.value = response.data?.pageNumber
         orders.value = response.data?.orders?.map((orderData) => new Order(orderData))
       })
       .catch(() => {
@@ -387,8 +401,8 @@
   const addNewWorkerService = () => {
     selectedOrder.value.workerService.push({
       worker: {
-        code: null,
-        name: null
+        code: isManager.value ? null : masterData.userInfo.accountId,
+        name: isManager.value ? null : masterData.userInfo.fullName
       },
       services: []
     })
@@ -468,6 +482,19 @@
       })
       .catch(() => {
         showCommonErrorMessage('Error Message', 'Can not update order')
+      })
+  }
+
+  async function updateBillInfo() {
+    await updateBill({
+      id: billInfo.value.id,
+      note: billInfo.value.note
+    })
+      .then(() => {
+        showSuccessUpdateOrder()
+      })
+      .catch(() => {
+        showCommonErrorMessage('Error Message', 'Can not update bills')
       })
   }
 
@@ -654,6 +681,7 @@
                                             inputId="currency-germany"
                                             mode="currency"
                                             currency="EUR"
+                                            disabled
                                             locale="de-DE"
                                             v-model="item.totalPrice"
                                             variant="filled"
@@ -757,6 +785,17 @@
                     </template>
                   </Card>
                 </div>
+                <div class="flex justify-center mt-5">
+                  <Button
+                    severity="info"
+                    class="w-full"
+                    :disabled="totalPrice == 0 && !disabledCheckOut"
+                    @click="updateBillInfo"
+                    style="border-width: 2px"
+                  >
+                    Update Bill
+                  </Button>
+                </div>
               </div>
             </div>
           </VeeForm>
@@ -797,6 +836,7 @@
                                         <div class="card flex justify-center">
                                           <InputNumber
                                             v-model="item.totalPrice"
+                                            :disabled="!isAllowEidt(item.worker.code)"
                                             inputId="price_input"
                                             mode="currency"
                                             currency="EUR"
@@ -976,16 +1016,28 @@
                 <FloatLabel class="w-full md:w-56 mt-3">
                   <Select
                     :invalid="isInvalidWorker(slotProps.data.worker.code)"
-                    :disabled="disableEdit"
+                    :disabled="!isManager"
                     id="over_label"
                     v-model="slotProps.data.worker"
+                    :style="{
+                      '--p-select-disabled-background':
+                        slotProps.data.worker.code == masterData.userInfo?.accountId
+                          ? 'white'
+                          : '#e2e8f0'
+                    }"
                     :options="staffs"
                     placeholder="Staff"
                     optionLabel="name"
                     class="w-full text-sm min-h-4"
                   >
                     <template #value="option">
-                      <div class="flex flex-row justify-between">
+                      <div
+                        :style="{
+                          color:
+                            option.value.code == masterData.userInfo?.accountId ? 'black' : 'gray'
+                        }"
+                        class="flex flex-row justify-between"
+                      >
                         <span class="font-light">{{ option.value.name ?? 'Staff' }}</span>
                         <span class="font-medium">{{ option.value.value }}</span>
                       </div>
@@ -1007,7 +1059,7 @@
                   v-model:visible="isVisibleSelectService"
                   modal
                   header="Services"
-                  class="w-3/4 sm:w-1/2"
+                  class="w-full h-full"
                 >
                   <Tree
                     :value="serviceOption"
@@ -1063,6 +1115,7 @@
                         v-model="service.price"
                         :minFractionDigits="2"
                         @click.stop
+                        :disabled="!isAllowEidt(slotProps.data.worker.code)"
                         size="small"
                         inputId="currency-germany"
                         mode="currency"
@@ -1083,7 +1136,7 @@
                   outlined
                   rounded
                   class="item-center"
-                  :disabled="disableEdit"
+                  :disabled="disableEdit || !isAllowEidt(slotProps.data.worker.code)"
                   severity="danger"
                   @click="confirmDeleteProduct(slotProps.data)"
                 />
