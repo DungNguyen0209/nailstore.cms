@@ -180,7 +180,7 @@
       note: note
     })
       .then((res) => {
-        showSuccessUpdateOrder()
+        showCommonSuccessMessage('Success Message', 'Update bill successfully')
       })
       .catch(() => {
         showCommonErrorMessage('Error Message', 'Can not update bills')
