@@ -179,7 +179,7 @@
       id: billId,
       note: note
     })
-      .then(() => {
+      .then((res) => {
         showSuccessUpdateOrder()
       })
       .catch(() => {
