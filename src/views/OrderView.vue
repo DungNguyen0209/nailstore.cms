@@ -287,6 +287,7 @@
           ?.filter((x) => !!x)
           .map((x) => ({
             type: 'service',
+            isHot: x.isHot,
             key: x.id,
             label: x.label,
             data: x.value,
@@ -1087,7 +1088,12 @@
                       <p class="font-medium">{{ slotProps.node.label }}</p>
                     </template>
                     <template #service="slotProps">
-                      <div class="flex flex-row w-full">
+                      <div
+                        class="flex flex-row w-full"
+                        :style="{
+                          backgroundColor: slotProps.node.isHot ? 'var(--p-pink-200)' : ''
+                        }"
+                      >
                         <Checkbox
                           v-model:model-value="slotProps.node.checked"
                           @change="checkItem(slotProps.node)"
