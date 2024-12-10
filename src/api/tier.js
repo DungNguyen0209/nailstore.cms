@@ -9,6 +9,7 @@ export async function createTier({ id, requiredVisit, requiredTotalSpent, color,
         name: name,
         creditPointSetting: {
             requiredPoints: creditPointSetting.requiredPoints,
+            limitPoints: creditPointSetting.limitPoints,
             price: parseFloat(creditPointSetting.price)
         }
     })
@@ -23,6 +24,7 @@ export async function updateTier({ id, requiredVisit, requiredTotalSpent, color,
         name: name,
         creditPointSetting: {
             requiredPoints: creditPointSetting.requiredPoints,
+            limitPoints: creditPointSetting.limitPoints,
             price: parseFloat(creditPointSetting.price)
         }
     })

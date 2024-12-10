@@ -138,7 +138,7 @@
     return val.toFixed(4)
   })
 
-  const creditPoint = computed((previous) => {
+  const creditPoint = computed(() => {
     if (selectedOrder?.value?.order == null) {
       return
     }
@@ -146,9 +146,21 @@
       selectedOrder?.value?.order?.owner?.creditPoints?.find(
         (point) => point.type === CreditPointType.Availabe
       )?.value ?? 0
+    const limitPoint = selectedOrder?.value?.order?.creditPointSetting?.limitPoints ?? 1
     const requiredPoint = selectedOrder?.value?.order?.creditPointSetting?.requiredPoints ?? 1
     const price = selectedOrder?.value?.order?.creditPointSetting?.price ?? 0
-    const usingPoint = Math.floor(parseInt(availablePoint) / parseInt(requiredPoint))
+    const usingPoint = Math.floor(
+      parseInt(Math.min(availablePoint, limitPoint)) / parseInt(requiredPoint)
+    )
+    if (rawPrice.value < usingPoint * price) {
+      console.log('rawPrice:', rawPrice.value, price)
+      return {
+        availablePoint: availablePoint,
+        usingPoint: Math.floor(rawPrice.value / price) * requiredPoint,
+        price: price,
+        discount: (Math.floor(rawPrice.value / price) * price).toFixed(4)
+      }
+    }
     return {
       availablePoint: availablePoint,
       usingPoint: usingPoint * requiredPoint,
