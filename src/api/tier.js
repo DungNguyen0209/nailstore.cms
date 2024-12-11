@@ -4,7 +4,7 @@ export async function createTier({ id, requiredVisit, requiredTotalSpent, color,
     return await api.post('api/tiers/create', {
         id: id,
         requiredVisit: parseInt(requiredVisit),
-        requiredTotalSpent: parseFloat(requiredTotalSpent),
+        requiredSpending: parseFloat(requiredTotalSpent),
         color: color,
         name: name,
         creditPointSetting: {
@@ -19,7 +19,7 @@ export async function updateTier({ id, requiredVisit, requiredTotalSpent, color,
     return await api.put('api/tiers/update', {
         id: id,
         requiredVisit: parseInt(requiredVisit),
-        requiredTotalSpent: parseFloat(requiredTotalSpent),
+        requiredSpending: parseFloat(requiredTotalSpent),
         color: color,
         name: name,
         creditPointSetting: {
