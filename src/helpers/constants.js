@@ -38,7 +38,7 @@ export const CreditPointType = {
 }
 
 export const defaultTier = {
-  Basic : 'Basic'
+  New : 'New'
 }
 
 export const sortDirection = {

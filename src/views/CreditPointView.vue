@@ -92,11 +92,13 @@
   const saveTier = async (tier) => {
     if (tier.id == null || tier.id == undefined) {
       await createTier(tier)
-      then(() => {
-        showCommonSuccessMessage('Success', 'Create tier successfully')
-      }).catch(() => {
-        showCommonErrorMessage('Error', 'Retry again')
-      })
+        .then(() => {
+          console.log('Create tier successfully')
+          showCommonSuccessMessage('Success', 'Create tier successfully')
+        })
+        .catch(() => {
+          showCommonErrorMessage('Error', 'Retry again')
+        })
     } else {
       await updateTier(tier)
         .then(() => {
@@ -129,6 +131,7 @@
               <template #header>
                 <IftaLabel class="mt-2">
                   <InputText
+                    :disabled="tier.name === defaultTier.New"
                     v-model="tier.name"
                     variant="filled"
                     id="tier"
@@ -138,7 +141,7 @@
                 </IftaLabel>
               </template>
               <template #content>
-                <div v-if="tier.name !== defaultTier.Basic" class="flex flex-col items-center">
+                <div v-if="tier.name !== defaultTier.New" class="flex flex-col items-center">
                   <div class="w-full flex flex-col gap-2 sm:flex-row">
                     <div class="flex flex-col w-full sm:w-1/2 sm:justify-center sm:ml-2">
                       <label for="visittime" class="font-semibold w-24">Visit Time</label>
@@ -214,7 +217,7 @@
             <div class="flex flex-row gap-3 mt-2 w-full sm:w-1/5 items-center justify-center">
               <Button icon="pi pi-save" @click="() => saveTier(tier)" aria-label="Filter" />
               <Button
-                v-if="tier.name !== defaultTier.Basic"
+                v-if="tier.name !== defaultTier.New"
                 @click="() => removeTier(tier)"
                 icon="pi pi-trash"
                 aria-label="Filter"
