@@ -28,6 +28,8 @@
   import IconField from 'primevue/iconfield'
   import InputIcon from 'primevue/inputicon'
   import Skeleton from 'primevue/skeleton'
+  import { addCreditPoint } from '@/api/creditPoint'
+  import InputNumber from 'primevue/inputnumber'
 
   const masterData = useMasterDataStore()
   const confirm = useConfirm()
@@ -52,6 +54,7 @@
   })
 
   const expandedRows = ref(null)
+  const additionalCreditPoint = ref(0)
   onMounted(async () => {
     masterData.setIsLoading(true)
     await queryCustomers()
@@ -92,6 +95,7 @@
 
   function refresh() {
     selectedTab.value = 1
+    visibleAddCreditPoint.value = false
     bills.value = {
       data: [],
       historyDetail: [],
@@ -189,6 +193,33 @@
         masterData.setIsLoading()
       })
   }
+
+  const isAdd = ref()
+  const visibleAddCreditPoint = ref(false)
+  const OpenAddCreditPoint = (status) => {
+    visibleAddCreditPoint.value = !visibleAddCreditPoint.value
+    isAdd.value = status
+  }
+  async function SaveAddCreditPoint() {
+    masterData.setIsLoading(true)
+    await addCreditPoint(
+      selectedCustomer.value.id,
+      isAdd.value ? additionalCreditPoint.value : -additionalCreditPoint.value
+    )
+      .then(() => {
+        showCommonSuccessMessage('Success', 'Update credit point successfully')
+        selectedCustomer.value.creditPoints.map((point) => {
+          point.value += isAdd.value ? additionalCreditPoint.value : -additionalCreditPoint.value
+        })
+      })
+      .catch((error) => {
+        showCommonErrorMessage('Error', 'Retry again')
+      })
+      .finally(() => {
+        masterData.setIsLoading()
+        visibleAddCreditPoint.value = false
+      })
+  }
 </script>
 
 <template>
@@ -272,13 +303,50 @@
           </div>
           <div class="flex items-center gap-4 mb-2">
             <label for="email" class="font-semibold w-24">Credit Point</label>
-            <span class="flex-auto" style="font-size: 2rem">{{
+            <span style="font-size: 2rem">{{
               Array.isArray(selectedCustomer?.creditPoints)
                 ? selectedCustomer.creditPoints.find(
                     (point) => point.type === CreditPointType.Availabe
                   )?.value
                 : 0
             }}</span>
+            <Dialog
+              v-model:visible="visibleAddCreditPoint"
+              header="Add Credit Point"
+              :style="{ width: '25rem' }"
+              position="top"
+              :modal="true"
+              :draggable="false"
+            >
+              <div class="flex flex-col gap-1 mb-2">
+                <InputNumber v-model="additionalCreditPoint" name="amount" fluid />
+              </div>
+              <div class="flex flex-row gap-3">
+                <Button
+                  type="button"
+                  label="Cancel"
+                  severity="secondary"
+                  @click="visibleAddCreditPoint = false"
+                ></Button>
+                <Button type="button" label="Save" @click="SaveAddCreditPoint"></Button>
+              </div>
+            </Dialog>
+            <Button
+              @click="OpenAddCreditPoint(true)"
+              icon="pi pi-plus"
+              severity="primary"
+              text
+              rounded
+              aria-label="Search"
+            />
+            <Button
+              @click="OpenAddCreditPoint(false)"
+              icon="pi pi-minus"
+              severity="primary"
+              text
+              rounded
+              aria-label="Search"
+            />
           </div>
         </div>
         <div v-if="selectedTab === 2">
