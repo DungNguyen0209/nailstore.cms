@@ -564,8 +564,8 @@
     await CheckoutOrder(
       selectedOrder.value.order.id,
       parseFloat(totalPrice.value),
-      creditPoint.value.usingPoint,
-      creditPoint.value.discount,
+      acceptDiscount.value ? creditPoint.value.usingPoint : 0,
+      acceptDiscount.value ? creditPoint.value.discount : 0,
       selectedOrder.value.note,
       selectedOrder.value.serviceWorker.map((x) => ({
         workerId: x.worker.code,
