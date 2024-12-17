@@ -47,6 +47,7 @@
   import Dialog from 'primevue/dialog'
   import Chip from 'primevue/chip'
   import { updateBill } from '@/api/billApi'
+  import DatePicker from 'primevue/datepicker'
 
   const confirm = useConfirm()
   const { showCommonErrorMessage, showSuccessUpdateOrder } = useToastMessage()
@@ -55,6 +56,8 @@
   const currentPage = ref(1)
   const sort = ref(sortDirection.Desc)
   const status = ref([OrderStatus.Open, OrderStatus.Processing])
+  const fromDate = ref(null)
+  const toDate = ref(null)
   const totalRecords = ref(0)
   const newOrder = ref(new Order({}))
   const visibleEdit = ref(false)
@@ -227,11 +230,15 @@
     if (e != null) {
       sort.value = e.sortDirection
       status.value = e.status
+      fromDate.value = new Date(e.fromDate.setHours(0, 0, 0, 0))
+      toDate.value = new Date(e.toDate.setHours(23, 59, 59, 999))
     }
     return await getOrders({
       pageSize: pageSize.value,
       pageNumber: currentPage.value,
       sortDirection: sort.value,
+      fromDate: fromDate.value?.toISOString(),
+      toDate: toDate.value?.toISOString(),
       status: status.value
     })
       .then((response) => {

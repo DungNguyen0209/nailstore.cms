@@ -1,31 +1,45 @@
 <template>
   <div class="card">
     <DataView
-      :value="orders"
+      :value="orders || []"
       :layout="layout"
       paginator
       lazy
       :totalRecords="totalRecords"
       :rows="pageNumer"
+      :allowEmpty="true"
       @page="onPageChange"
     >
       <template #header>
         <div class="flex gap-2 flex-col sm:flex-row">
-          <!-- <SelectButton v-model="layout" :options="options" :allowEmpty="false">
-                        <template #option="{ option }">
-                            <i :class="[option === 'list' ? 'pi pi-bars' : 'pi pi-table']" />
-                        </template>
-                    </SelectButton> -->
-          <div class="border-gray-400 w-full flex flex-col sm:flex-row">
-            <Button
-              icon="pi pi-filter-fill"
-              text
-              rounded
-              severity="secondary"
-              @click="() => changeDirection()"
-            />
+          <div class="border-gray-400 w-full flex flex-col">
+            <div class="flex flex-row">
+              <Button
+                icon="pi pi-filter-fill"
+                text
+                rounded
+                severity="secondary"
+                @click="() => changeDirection()"
+              />
+              <div class="w-full flex gap-2 justify-end">
+                <Button
+                  icon="pi pi-download"
+                  label="Auto Asign"
+                  aria-label="Filter"
+                  class="p-button-sm justify-end"
+                  @click="emit('autoAssign')"
+                  :disabled="disableAutoAsssign"
+                ></Button>
+                <Button
+                  icon="pi pi-refresh"
+                  aria-label="Filter"
+                  class="p-button-sm justify-end"
+                  @click="emitReload"
+                />
+              </div>
+            </div>
             <Transition>
-              <div v-show="enableFilter" class="flex flex-col sm:flex-row gap-2">
+              <div v-show="enableFilter" class="flex flex-col sm:flex-row gap-2 mt-1">
                 <MultiSelect
                   v-model="selectedStatus"
                   :options="statusOptions"
@@ -35,45 +49,28 @@
                   class="w-full sm:w-48"
                   placeholder="Status"
                 />
-                <div
-                  @click="
-                    () => {
-                      isSortDesc = !isSortDesc
-                      emitReload()
-                    }
-                  "
-                  class="flex hover: cursor-pointer bg-slate-200 hover:bg-slate-500 active:bg-slate-500 focus:outline-none focus:ring focus:ring-slate-300 flex-row rounded-lg items-center justify-center p-1 border-zinc-300 border"
-                >
-                  <span class="text-sm font-semibold">Time</span>
-                  <i
-                    v-if="isSortDesc"
-                    class="pi pi-sort-amount-down-alt ml-3"
-                    style="color: black; font-size: 1rem"
-                  ></i>
-                  <i
-                    v-else
-                    class="pi pi-sort-amount-up-alt ml-3"
-                    style="color: black; font-size: 1rem"
-                  ></i>
-                </div>
+                <FloatLabel>
+                  <DatePicker
+                    v-model="fromDate"
+                    inputId="toDate"
+                    showIcon
+                    iconDisplay="input"
+                    variant="filled"
+                  />
+                  <label class="font-light" for="toDate">From Date</label>
+                </FloatLabel>
+                <FloatLabel>
+                  <DatePicker
+                    v-model="toDate"
+                    inputId="toDate"
+                    showIcon
+                    iconDisplay="input"
+                    variant="filled"
+                  />
+                  <label class="font-light" for="toDate">To Date</label>
+                </FloatLabel>
               </div>
             </Transition>
-          </div>
-          <div class="w-full flex gap-2 justify-end">
-            <Button
-              icon="pi pi-download"
-              label="Auto Asign"
-              aria-label="Filter"
-              class="p-button-sm justify-end"
-              @click="emit('autoAssign')"
-              :disabled="disableAutoAsssign"
-            ></Button>
-            <Button
-              icon="pi pi-refresh"
-              aria-label="Filter"
-              class="p-button-sm justify-end"
-              @click="emitReload"
-            />
           </div>
         </div>
       </template>
@@ -182,6 +179,8 @@
   import Skeleton from 'primevue/skeleton'
   import Menubar from 'primevue/menubar'
   import MultiSelect from 'primevue/multiselect'
+  import DatePicker from 'primevue/datepicker'
+  import FloatLabel from 'primevue/floatlabel'
 
   const props = defineProps({
     orders: {
@@ -220,6 +219,8 @@
 
   const enableFilter = ref(false)
   const isSortDesc = ref(true)
+  const fromDate = ref(null)
+  const toDate = ref(null)
   const changeDirection = () => {
     enableFilter.value = !enableFilter.value
   }
@@ -254,13 +255,11 @@
     emit('editOrder', slotProps)
   }
   const emitReload = () => {
-    console.log('emitReload', {
-      status: selectedStatus.value,
-      sortDirection: isSortDesc.value ? sortDirection.Desc : sortDirection.Asc
-    })
     emit('reloadOrders', {
       status: selectedStatus.value,
-      sortDirection: isSortDesc.value ? sortDirection.Desc : sortDirection.Asc
+      sortDirection: isSortDesc.value ? sortDirection.Desc : sortDirection.Asc,
+      fromDate: fromDate.value,
+      toDate: toDate.value
     })
   }
 </script>
