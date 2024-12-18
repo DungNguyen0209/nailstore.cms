@@ -230,8 +230,8 @@
     if (e != null) {
       sort.value = e.sortDirection
       status.value = e.status
-      fromDate.value = new Date(e.fromDate.setHours(0, 0, 0, 0))
-      toDate.value = new Date(e.toDate.setHours(23, 59, 59, 999))
+      fromDate.value = !!e.fromDate ? new Date(e.fromDate?.setHours(0, 0, 0, 0)) : null
+      toDate.value = !!e.toDate ? new Date(e.toDate?.setHours(23, 59, 59, 999)) : null
     }
     return await getOrders({
       pageSize: pageSize.value,
@@ -1090,7 +1090,7 @@
             <Column field="type" header="Service" class="sm:w-4/5">
               <template #body="slotProps">
                 <Dialog
-                  :visible="isVisibleSelectService"
+                  v-model:visible="isVisibleSelectService"
                   modal
                   header="Services"
                   class="w-full h-full"

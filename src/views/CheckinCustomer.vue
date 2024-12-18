@@ -3,7 +3,7 @@
     v-show="isNumberEnterStep"
     class="flex flex-col items-center justify-center h-screen bg-pink-100 p-4 md:p-8 no-double-tap-zoom"
   >
-    <div class="absolute top-0 left-0 m-4 w-full">
+    <div class="top-0 left-0 m-4 w-full">
       <Button
         class="text-white"
         icon="pi pi-home"
@@ -73,7 +73,7 @@
       </div>
     </div>
     <!-- Footer with Checkbox -->
-    <footer class="mt-6 text-sm text-gray-600 text-center max-w-xs">
+    <div class="mt-6 text-sm text-gray-600 text-center max-w-xs">
       <label class="flex items-center space-x-2">
         <input
           type="checkbox"
@@ -85,7 +85,7 @@
           Geschäftsbedingungen des Geschäfts einverstanden.</span
         >
       </label>
-    </footer>
+    </div>
   </div>
   <div v-show="!isNumberEnterStep" class="background-container">
     <CardBox

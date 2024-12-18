@@ -8,7 +8,6 @@
   import ScrollPanel from 'primevue/scrollpanel'
   import Paginator from 'primevue/paginator'
   import { useConfirm } from 'primevue/useconfirm'
-  import { mdiAccountGroup } from '@mdi/js'
   import { getAccountByFilter, updateAccount, deleteAccount } from '@/api/account'
   import { CreditPointType } from '@/helpers/constants'
   import { Role } from '@/helpers/constants'
@@ -18,18 +17,18 @@
   import Textarea from 'primevue/textarea'
   import InputText from 'primevue/inputtext'
   import SelectButton from 'primevue/selectbutton'
-  import ConfirmPopup from 'primevue/confirmpopup'
   import Bill from '@/types/Bill'
   import { getBillOfAccount, updateBill } from '@/api/billApi'
   import DataTable from 'primevue/datatable'
   import Column from 'primevue/column'
-  import Chip from 'primevue/chip'
   import Tag from 'primevue/tag'
   import IconField from 'primevue/iconfield'
   import InputIcon from 'primevue/inputicon'
   import Skeleton from 'primevue/skeleton'
   import { addCreditPoint } from '@/api/creditPoint'
   import InputNumber from 'primevue/inputnumber'
+  import CustomerHistoryTable from '@/components/Customer/CustomerHistoryTable.vue'
+  import { uuidv7 } from 'uuidv7'
 
   const masterData = useMasterDataStore()
   const confirm = useConfirm()
@@ -180,7 +179,7 @@
   async function updateBillInfo(billId, note) {
     masterData.setIsLoading(true)
     await updateBill({
-      id: billId,
+      id: uuidv7(billId),
       note: note
     })
       .then((res) => {
@@ -351,86 +350,11 @@
         </div>
         <div v-if="selectedTab === 2">
           <div>
-            <DataTable
-              v-model:expandedRows="expandedRows"
-              @row-expand="onRowExpand"
-              @row-collapse="onRowCollapse"
-              :value="bills.data"
-              dataKey="id"
-              :loading="masterData.isComponentLoading"
-              scrollable
-              tableStyle="min-width: 30rem"
-              class="custom-datatable"
-            >
-              <template #header>
-                <div class="flex flex-wrap gap-2 items-center justify-between">
-                  <IconField>
-                    <InputIcon>
-                      <i class="pi pi-euro ml-6" />
-                    </InputIcon>
-                    <span> {{ bills.totalPrice }}</span>
-                  </IconField>
-                </div>
-              </template>
-              <Column expander style="width: 5rem" />
-              <Column field="CreatedTime" header="Check in ">
-                <template #body="slotProps">
-                  {{ new Date(slotProps.data.createdTime).toLocaleString() }}
-                </template>
-              </Column>
-              <Column field="price" header="Price"> </Column>
-              <Column field="discount" header="Discount"></Column>
-              <Column field="creditPoint" header="CreditPoint"></Column>
-              <template #expansion="slotProps">
-                <div class="p-4">
-                  <DataTable :value="slotProps.data.serviceWorker" headerClass="bg-primary">
-                    <Column field="service" header="Service">
-                      <template #body="slotProps">
-                        <div class="inline-block">
-                          <article class="ml-1 text-wrap">
-                            <p class="break-words font-light">
-                              {{ slotProps.data.service?.name }}
-                            </p>
-                          </article>
-                        </div>
-                      </template>
-                    </Column>
-                    <Column field="workers" header="Worker" class="w-2/5">
-                      <template #body="slotProps">
-                        <div class="flex flex-wrap gap-1">
-                          <Tag severity="success" :value="slotProps.data.worker?.fullName" />
-                        </div>
-                      </template>
-                    </Column>
-                    <Column field="amount" header="Amount" class="w-1/5">
-                      <template #body="slotProps">
-                        <IconField>
-                          <InputIcon>
-                            <i class="pi pi-euro ml-2" />
-                          </InputIcon>
-                          <span> {{ slotProps.data.totalPrice }}</span>
-                        </IconField>
-                      </template>
-                    </Column>
-                  </DataTable>
-                </div>
-                <div class="flex flex-row w-full">
-                  <Textarea
-                    v-model="slotProps.data.note"
-                    class="flex-auto h-20 dark:bg-slate-800 rounded-md w-4/5"
-                    rows="4"
-                    autocomplete="off"
-                  />
-                  <div class="w-1/5 flex items-center justify-center">
-                    <Button
-                      @click="() => updateBillInfo(slotProps.data.id, slotProps.data.note)"
-                      icon="pi pi-save"
-                      aria-label="Filter"
-                    />
-                  </div>
-                </div>
-              </template>
-            </DataTable>
+            <CustomerHistoryTable
+              :bills="bills"
+              :expandedRows="expandedRows"
+              @update-note="(note, id) => updateBillInfo(note, id)"
+            />
           </div>
         </div>
         <template #footer>

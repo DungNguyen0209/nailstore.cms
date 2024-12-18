@@ -106,19 +106,32 @@
               class="relative overflow-hidden p-6 border border-surface-200 dark:border-surface-700 bg-surface-0 dark:bg-surface-900 rounded flex flex-col hover:cursor-pointer"
               @click="editOrder(item)"
             >
-              <div class="w-1/5 bg-surface-100 p-1" style="border-radius: 30px">
+              <div class="flex flex-row gap-2">
                 <div
-                  class="bg-surface-0 flex items-center gap-2 justify-center py-1 px-2"
-                  style="
-                    border-radius: 30px;
-                    box-shadow: 0px 1px 2px 0px rgba(0, 0, 0, 0.04),
-                      0px 1px 2px 0px rgba(0, 0, 0, 0.06);
-                  "
+                  class="w-1/5 bg-surface-100 p-1"
+                  v-if="item.status == OrderStatus.Open"
+                  style="border-radius: 30px"
                 >
-                  <i
-                    v-if="item.status == OrderStatus.Open"
-                    class="pi pi-star-fill text-yellow-500"
-                  ></i>
+                  <div
+                    class="bg-surface-0 flex items-center gap-2 justify-center py-1 px-2"
+                    style="
+                      border-radius: 30px;
+                      box-shadow: 0px 1px 2px 0px rgba(0, 0, 0, 0.04),
+                        0px 1px 2px 0px rgba(0, 0, 0, 0.06);
+                    "
+                  >
+                    <i class="pi pi-star-fill text-yellow-500"></i>
+                  </div>
+                </div>
+                <div>
+                  <span class="text-sm content-center mt-1"
+                    >{{
+                      item?.owner?.creditPoints?.find(
+                        (point) => point.type === CreditPointType.Availabe
+                      )?.value ?? 0
+                    }}
+                    points</span
+                  >
                 </div>
               </div>
               <Tag
@@ -158,7 +171,12 @@
                         class="w-full"
                       ></Tag>
                     </div>
-                    <Button class="w-1/5" icon="pi pi-heart" outlined></Button>
+                    <Button
+                      class="w-1/5"
+                      icon="pi pi-heart"
+                      @click.stop="viewHistory(item.id)"
+                      outlined
+                    ></Button>
                   </div>
                 </div>
               </div>
@@ -171,7 +189,7 @@
 </template>
 
 <script setup>
-  import { OrderStatus, sortDirection } from '@/helpers/constants'
+  import { CreditPointType, OrderStatus, sortDirection } from '@/helpers/constants'
   import { ref, computed, defineProps } from 'vue'
   import { Button, Tag, SelectButton, DataView } from 'primevue'
   import Order from '@/types/Order'
@@ -181,7 +199,6 @@
   import MultiSelect from 'primevue/multiselect'
   import DatePicker from 'primevue/datepicker'
   import FloatLabel from 'primevue/floatlabel'
-
   const props = defineProps({
     orders: {
       type: Array,
@@ -237,7 +254,7 @@
   const disableAutoAsssign = computed(() => {
     return props.orders.filter((order) => order.status == OrderStatus.Open).length > 0
   })
-  const emit = defineEmits(['changePaging', 'editOrder', 'reloadOrders', 'autoAssign'])
+  const emit = defineEmits(['changePaging', 'editOrder', 'reloadOrders', 'autoAssign', 'viewHistory'])
 
   const layout = ref('grid')
 
@@ -246,6 +263,9 @@
       return '€ ' + order.bill.price
     }
     return ''
+  }
+  const viewHistory = (id) => {
+    emit('viewHistory', id)
   }
 
   const onPageChange = (event) => {
