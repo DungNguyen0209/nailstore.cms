@@ -173,8 +173,8 @@
                     </div>
                     <Button
                       class="w-1/5"
-                      icon="pi pi-heart"
-                      @click.stop="viewHistory(item.id)"
+                      icon="pi pi-history"
+                      @click.stop="viewHistory(item.owner.id)"
                       outlined
                     ></Button>
                   </div>

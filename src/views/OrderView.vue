@@ -36,6 +36,7 @@
     getPaymentDetail,
     autoAssignOrderForStaff
   } from '@/api/orderApi'
+  import CustomerHistoryTable from '@/components/Customer/CustomerHistoryTable.vue'
   import { useConfirm } from 'primevue/useconfirm'
   import { mdiInvoice } from '@mdi/js'
   import Drawer from 'primevue/drawer'
@@ -48,6 +49,7 @@
   import Chip from 'primevue/chip'
   import { updateBill } from '@/api/billApi'
   import DatePicker from 'primevue/datepicker'
+  import { getBillOfAccount } from '@/api/billApi'
 
   const confirm = useConfirm()
   const { showCommonErrorMessage, showSuccessUpdateOrder } = useToastMessage()
@@ -270,6 +272,11 @@
     staffs.value = null
     newOrder.value.createdBy = masterData.userInfo?.id ?? ''
     reflectSelectedOrder.value = null
+    bills.value = {
+      data: [],
+      totalPrice: 0
+    }
+    expandedRows.value = null
     reflectBill.value = null
   }
 
@@ -636,12 +643,54 @@
         showCommonErrorMessage('Error Message', 'Can not auto assign order')
       })
   }
+
+  const bills = ref({
+    data: [],
+    totalPrice: 0
+  })
+
+  const expandedRows = ref(null)
+  const isVisbleHistory = ref(false)
+  async function getCustomerHistory(id) {
+    masterData.setIsLoading(true)
+    await getBillOfAccount(id)
+      .then((res) => {
+        bills.value.totalPrice = res.data.totalPrice
+        bills.value.data = res.data.data.map((b) => new Bill(b))
+        expandedRows.value = bills.value.data.reduce((acc, p) => {
+          acc[p.id] = false
+          return acc
+        }, {})
+      })
+      .catch((error) => {
+        showCommonErrorMessage('Error', 'Retry again')
+      })
+      .finally(() => {
+        masterData.setIsLoading()
+        isVisbleHistory.value = true
+      })
+  }
 </script>
 
 <template>
   <LayoutAuthenticated>
     <SectionMain>
       <CardBox class="mb-6" has-table>
+        <Drawer
+          v-bind:block-scroll="true"
+          v-model:visible="isVisbleHistory"
+          position="right"
+          :style="{ width: '70%' }"
+          class="w-full sm:w-1/2"
+          @hide="refreshDetailInfor"
+          :header="'History'"
+        >
+          <CustomerHistoryTable
+            :bills="bills"
+            :expandedRows="expandedRows"
+            @update-note="(note, id) => updateBillInfo(note, id)"
+          />
+        </Drawer>
         <OrderTable
           :orders="orders"
           :page-numer="pageSize"
@@ -654,6 +703,7 @@
           @auto-assign="autoAssignTask"
           @change-paging="getPagingOrders"
           @edit-order="(order) => editOrder(order)"
+          @view-history="(id) => getCustomerHistory(id)"
         />
       </CardBox>
       <Drawer

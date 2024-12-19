@@ -29,7 +29,7 @@
   import InputNumber from 'primevue/inputnumber'
   import CustomerHistoryTable from '@/components/Customer/CustomerHistoryTable.vue'
   import { uuidv7 } from 'uuidv7'
-
+  import { isNumber } from '@/helpers/number'
   const masterData = useMasterDataStore()
   const confirm = useConfirm()
   const customers = ref([new Account()])
@@ -173,7 +173,7 @@
     // Set a new debounce timer
     debounceTimer = setTimeout(async () => {
       await queryCustomers()
-    }, 1000)
+    }, 2000)
   }
 
   async function updateBillInfo(billId, note) {
