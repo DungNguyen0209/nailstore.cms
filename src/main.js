@@ -12,6 +12,7 @@ import ToastService from 'primevue/toastservice';
 import ConfirmationService from 'primevue/confirmationservice';
 import Vue3Lottie from "vue3-lottie";
 import 'primeicons/primeicons.css';
+import Tooltip from 'primevue/tooltip';
 
 // Init Pinia
 const pinia = createPinia()
@@ -49,6 +50,7 @@ app.use(PrimeVue, {
 })
 changePrimaryColor();
 app.use(ToastService);
+app.directive('tooltip', Tooltip);
 app.use(router).use(pinia).mount('#app')
 
 // Init main store

@@ -173,6 +173,7 @@
                     </div>
                     <Button
                       class="w-1/5"
+                      v-tooltip.top="'History'"
                       icon="pi pi-history"
                       @click.stop="viewHistory(item.owner.id)"
                       outlined

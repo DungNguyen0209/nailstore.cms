@@ -91,6 +91,7 @@
   import InputIcon from 'primevue/inputicon'
   import Textarea from 'primevue/textarea'
   import Button from 'primevue/button'
+  import Tag from 'primevue/tag'
 
   const masterData = useMasterDataStore()
   const props = defineProps({
