@@ -48,7 +48,6 @@
   import Dialog from 'primevue/dialog'
   import Chip from 'primevue/chip'
   import { updateBill } from '@/api/billApi'
-  import DatePicker from 'primevue/datepicker'
   import { getBillOfAccount } from '@/api/billApi'
 
   const confirm = useConfirm()

@@ -84,7 +84,7 @@ export async function autoAssignOrderForStaff(id) {
 export async function getKpiOfStaff(staffId, startDate, endDate) {
   return await api.get(`api/orders/kpi`, {
     params: {
-      staffId: staffId,
+      staffId: staffId ?? null,
       fromDate: startDate,
       toDate: endDate
     }

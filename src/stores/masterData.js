@@ -1,12 +1,14 @@
 import { defineStore } from 'pinia'
-import { ref } from 'vue'
-
+import { ref, computed } from 'vue'
+import { Role } from '@/helpers/constants';
 export const useMasterDataStore = defineStore('masterData', () => {
     const categoryService = ref([]);
     const userInfo = ref(JSON.parse(localStorage.getItem('userInfo')) || {});
     const isLoading = ref(false);
     const isComponentLoading = ref(false);
-
+    const isManager = computed(() => {
+        return userInfo.value?.scope.some((x) => x === Role.Manager)
+      })
     function setCategoryService(payload = null) {
         categoryService.value = payload ?? [];
     }
@@ -39,6 +41,7 @@ export const useMasterDataStore = defineStore('masterData', () => {
     userInfo,
     isLoading,
     isComponentLoading,
+    isManager,
     setCategoryService,
     setUserInfo,
     setIsLoading,
