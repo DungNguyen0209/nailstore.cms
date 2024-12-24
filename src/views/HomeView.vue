@@ -54,7 +54,7 @@
     )
       .then((res) => {
         totalOrder.value = res.data.total0rder
-        totalPrice.value = parseFloat(res.data.totalPrice ?? 0).toFixed(4)
+        totalPrice.value = parseFloat(res.data.totalPrice ?? 0)
       })
       .finally(() => {
         setIsLoading(false)
