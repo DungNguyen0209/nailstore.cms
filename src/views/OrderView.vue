@@ -1158,24 +1158,32 @@
                     <template #service="slotProps">
                       <div
                         class="flex flex-row w-full"
-                        :style="{
-                          backgroundColor: slotProps.node.isHot ? 'var(--p-pink-200)' : ''
-                        }"
+                        :class="{ 'custom-hot-class': slotProps.node.isHot }"
                       >
                         <Checkbox
                           v-model:model-value="slotProps.node.checked"
                           @change="checkItem(slotProps.node)"
                           binary
                         />
-                        <div class="w-full sm:w-4/5 flex flex-col sm:flex-row">
+                        <div class="w-full flex flex-col sm:flex-row">
                           <div class="w-full sm:w-9/12 inline-block">
                             <article class="ml-1 text-wrap">
                               <p class="break-words font-light">{{ slotProps.node.label }}</p>
                             </article>
                           </div>
-                          <p class="w-full sm:w-3/12 sm:ml-12 font-medium">
-                            {{ slotProps.node.data }} €
-                          </p>
+                          <div
+                            :class="{ 'custom-hot-price-class': slotProps.node.isHot }"
+                            class="w-full flex flex-row justify-between items-center"
+                          >
+                            <p class="w-full rounded-full pl-5 sm:w-3/12 sm:ml-12 font-medium">
+                              {{ slotProps.node.data }} €
+                            </p>
+                            <i
+                              v-if="slotProps.node.isHot"
+                              class="pi pi-star-fill pr-4"
+                              style="color: #fffa86 !important; font-size: 1.2rem"
+                            ></i>
+                          </div>
                         </div>
                       </div>
                     </template>
@@ -1264,6 +1272,22 @@
 <style scoped>
   :deep(.p-tree-node-label) {
     width: 100%;
+  }
+
+  .custom-hot-price-class {
+    background-color: var(--p-pink-200);
+    width: 100%;
+    padding-left: 7px;
+    clip-path: polygon(30px 100%, 100% 100%, 100% 0%, 30px 0%, 0% 50%);
+  }
+
+  .custom-hot-class {
+    /* Your custom styles here */
+    width: 100%;
+    display: inline-flex;
+    border-radius: 9999px;
+    box-shadow: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);
+    background-color: rgb(209 213 219 / var(--tw-bg-opacity, 1)); /* Example style */
   }
   :deep(.p-tree-node-toggle-button) {
     display: none;
