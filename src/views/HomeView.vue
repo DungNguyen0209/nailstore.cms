@@ -17,6 +17,8 @@
   import Select from 'primevue/select'
   import FloatLabel from 'primevue/floatlabel'
   import DatePicker from 'primevue/datepicker'
+  import { truncateToFourDecimals } from '@/helpers/number'
+
   const { userInfo, setIsLoading, isManager } = useMasterDataStore()
   const totalOrder = ref(0)
   const totalPrice = ref(0)
@@ -54,7 +56,9 @@
     )
       .then((res) => {
         totalOrder.value = res.data.total0rder
-        totalPrice.value = parseFloat(res.data.totalPrice ?? 0)
+        const value1 = 5173.030000000001
+        const value2 = 5373.09999999999
+        totalPrice.value = truncateToFourDecimals(parseFloat(res.data.totalPrice ?? 0))
       })
       .finally(() => {
         setIsLoading(false)
@@ -134,7 +138,7 @@
           color="text-blue-500"
           :icon="mdiCartOutline"
           :number="totalPrice"
-          prefix="€"
+          prefix="€ "
           label="Sales"
         />
         <CardBoxWidget
