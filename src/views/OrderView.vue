@@ -71,7 +71,10 @@
   const selectedWorkerService = ref(null)
   const expandedKeys = ref({})
   const disabledCheckOut = computed(() => {
-    return selectedOrder.value?.order?.status === OrderStatus.Payment
+    return (
+      selectedOrder.value?.order?.status === OrderStatus.Payment &&
+      masterData.userInfo.scope.some((x) => x === Role.Manager && x === Role.Cashier)
+    )
   })
 
   const isManager = computed(() => {
@@ -544,27 +547,6 @@
           }))
       })
     )
-  }
-
-  const confirmSaveInformation = (event) => {
-    confirm.require({
-      target: event.currentTarget,
-      message: 'Are you sure you want to proceed?',
-      icon: 'pi pi-exclamation-triangle',
-      group: 'saveOrderDetail',
-      rejectProps: {
-        label: 'Cancel',
-        severity: 'secondary',
-        outlined: true
-      },
-      acceptProps: {
-        label: 'Save'
-      },
-      accept: async () => {
-        await saveOrderInformation()
-      },
-      reject: () => {}
-    })
   }
 
   const openDiscountCreditTag = ref(false)
@@ -1249,7 +1231,7 @@
                 label="Save"
                 iconPos="right"
                 class="align-middle"
-                @click="confirmSaveInformation($event)"
+                @click="saveOrderInformation(selectService.status)"
                 style="border-width: 2px"
               ></Button>
               <Button

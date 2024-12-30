@@ -76,12 +76,36 @@ export function useToastMessage() {
     })
   }
 
+  const confirmCreateCheckInFrequentCustomer = (accept, reject) => {
+    confirm.require({
+      message:
+        'Do you want to create order for frequent use ?',
+      header: 'Confirmation',
+      icon: 'pi pi-exclamation-triangle',
+      rejectProps: {
+        label: 'Cancel',
+        severity: 'secondary',
+        outlined: true
+      },
+      acceptProps: {
+        label: 'Save'
+      },
+      accept: () => {
+        accept()
+      },
+      reject: () => {
+        reject()
+      }
+    })
+  }
+
   return {
     showSuccessCreateService,
     showSuccessUpdateOrder,
     showFailLogin,
     confirmCreateCheckInCustomer,
     showCommonErrorMessage,
-    showCommonSuccessMessage
+    showCommonSuccessMessage,
+    confirmCreateCheckInFrequentCustomer
   }
 }

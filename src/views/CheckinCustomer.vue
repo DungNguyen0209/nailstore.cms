@@ -21,9 +21,9 @@
 
     <div class="flex flex-col md:flex-row items-center w-full gap-8">
       <!-- Points Badge -->
-      <div class="flex justify-center w-6/12">
+      <div class="flex flex-col justify-center w-10/12 sm:w-5/12">
         <div
-          class="bg-gray-800 text-white p-6 md:p-8 rounded-lg flex flex-col items-center shadow-lg transform transition duration-200 hover:-translate-y-1 w-full md:w-2/3 md:h-64"
+          class="bg-gray-800 text-white p-6 md:p-8 rounded-lg flex flex-col items-center shadow-lg transform transition duration-200 hover:-translate-y-1 w-full md:h-64"
         >
           <h1 class="font-bold points">{{ points }}</h1>
           <p class="text-lg md:text-xl mt-2 opacity-80">Punkte</p>
@@ -31,6 +31,13 @@
             Entsprechen {{ (points / 40).toFixed(2) }}€
           </p>
         </div>
+        <Button
+          class="w-full mt-3"
+          label="Create order for Temporary user"
+          severity="help"
+          raised
+          @click="createOrderForTemporaryUser"
+        />
       </div>
 
       <!-- Number Pad -->
@@ -141,9 +148,14 @@
   import { createOrder } from '@/api/orderApi'
   import { useMasterDataStore } from '@/stores/masterData'
   import { useRouter } from 'vue-router'
+  import { uuidv7 } from 'uuidv7'
 
   const router = useRouter()
-  const { confirmCreateCheckInCustomer, showCommonErrorMessage } = useToastMessage()
+  const {
+    confirmCreateCheckInCustomer,
+    showCommonErrorMessage,
+    confirmCreateCheckInFrequentCustomer
+  } = useToastMessage()
   const points = ref(400)
   const enteredValue = ref('')
   const numbers = [1, 2, 3, 4, 5, 6, 7, 8, 9, 0]
@@ -169,6 +181,7 @@
         .then((res) => {
           if (res.data) {
             account.value = new Account(res.data)
+            isNewAccount.value = false
             isNumberEnterStep.value = false
           }
         })
@@ -232,6 +245,33 @@
       .catch((error) => {
         showErrorCommonMessage('Error', 'Retry again')
       })
+  }
+  const createOrderForTemporaryUser = async () => {
+    confirmCreateCheckInFrequentCustomer(
+      async () => {
+        var orderData = {
+          isNewAccount: false,
+          ownerId: '00000000-0000-0000-0000-000000000000',
+          account: {
+            fullName: 'Temporary User',
+            email: '',
+            phone: '',
+            role: 'Guest',
+            createdBy: masterData.userInfo.id
+          },
+          createdBy: masterData.userInfo.id,
+          description: ''
+        }
+        await createOrder(orderData)
+          .then((response) => {
+            router.push({ name: 'CheckinSucess' })
+          })
+          .catch((error) => {
+            showErrorCommonMessage('Error', 'Retry again')
+          })
+      },
+      () => {}
+    )
   }
 </script>
 

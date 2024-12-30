@@ -45,3 +45,7 @@ export const sortDirection = {
   Asc: 'asc',
   Desc: 'desc'
 }
+
+export const defaultUUID = {
+  UUID: '00000000-0000-0000-0000-000000000000'
+}

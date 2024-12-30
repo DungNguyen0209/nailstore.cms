@@ -49,11 +49,7 @@
 
   async function queryKpi() {
     setIsLoading(true)
-    await getKpiOfStaff(
-      isManager ? selectedStaff.value : userInfo.accountId,
-      startOfDay.value,
-      endOfDay.value
-    )
+    await getKpiOfStaff(selectedStaff.value || userInfo.accountId, startOfDay.value, endOfDay.value)
       .then((res) => {
         totalOrder.value = res.data.total0rder
         const value1 = 5173.030000000001

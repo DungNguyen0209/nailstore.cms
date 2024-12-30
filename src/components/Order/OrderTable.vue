@@ -135,9 +135,9 @@
                 </div>
               </div>
               <Tag
-                :value="item?.owner?.tier?.label"
+                :value="item?.owner?.tier?.label || 'Temporary'"
                 :style="{
-                  '--tag-bg-color': `#${item?.owner?.tier?.value}`,
+                  '--tag-bg-color': `#${item?.owner?.tier?.value || '3caed0'}`,
                   '--p-tag-font-weight': 400
                 }"
                 class="absolute transform rotate-45 custom-tag text-center font-light !important py-1 right-[-36px] top-[32px] w-[170px]"
@@ -148,12 +148,12 @@
                   <div class="w-full">
                     <div class="flex flex-row w-full h-fit">
                       <h class="w-3/4 font-bold text-2xl text-lime-600 dark:text-surface-400">{{
-                        item.owner?.fullName
+                        item.owner?.fullName || '###Temporary###'
                       }}</h>
                     </div>
                     <div class="flex flex-row">
                       <i class="pi pi-phone content-center"></i>
-                      <div class="ml-2 spac text-lg mt-1">{{ item.owner?.phone }}</div>
+                      <div class="ml-2 spac text-lg mt-1">{{ item.owner?.phone ?? '' }}</div>
                     </div>
                     <div class="flex flex-row mt-3 gap-2">
                       <span class="text-sm font-semibold">Check In:</span>
@@ -190,7 +190,7 @@
 </template>
 
 <script setup>
-  import { CreditPointType, OrderStatus, sortDirection } from '@/helpers/constants'
+  import { CreditPointType, defaultUUID, OrderStatus, sortDirection } from '@/helpers/constants'
   import { ref, computed, defineProps } from 'vue'
   import { Button, Tag, SelectButton, DataView } from 'primevue'
   import Order from '@/types/Order'
