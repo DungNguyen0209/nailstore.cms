@@ -163,11 +163,16 @@
                         </InputGroup>
                       </div>
                     </div>
+
+                    <div class="flex flex-col w-full sm:w-1/2 sm:justify-center sm:ml-2">
+                      <label for="visittime" class="font-semibold">CreditPoint</label>
+                      <InputNumber v-model="tier.creditPoint" :useGrouping="false" class="w-2/3" />
+                    </div>
                   </div>
                 </div>
               </template>
               <template #footer>
-                <div class="w-full flex flex-row">
+                <div class="w-full flex mt-2 flex-row border-dashed border-t-2">
                   <div class="w-1/4 flex flex-col">
                     <label for="color" class="font-semibold">Color</label>
                     <ColorPicker v-model="tier.color" id="color" />
