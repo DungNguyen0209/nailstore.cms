@@ -26,7 +26,7 @@ class Order {
       }
       this.createdBy = createdBy;
       this.createdTime = new Date(createdTime).toLocaleString();
-      this.Bill = bill == null ? null : new Bill({
+      this.Bill =bill == null ? null : new Bill({
         id: bill.id,
         orderId: bill.orderId,
         price: bill.price,

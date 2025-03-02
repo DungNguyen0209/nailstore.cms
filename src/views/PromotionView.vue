@@ -23,27 +23,11 @@
   import VirtualScroller from 'primevue/virtualscroller'
   import Skeleton from 'primevue/skeleton'
   import Promotion from '@/types/Promotion'
-  import { getPromotions } from '@/api/promotion'
 
   const masterData = useMasterDataStore()
   const confirm = useConfirm()
   const { showCommonErrorMessage, showCommonSuccessMessage } = useToastMessage()
   const promotions = ref([new Promotion()])
-  const pageSize = ref(10)
-  const pageNumber = ref(1)
-  onMounted(async () => {
-    await getPromotions({
-      pageSize: pageSize.value,
-      pageNumber: pageNumber.value - 1
-    })
-      .then((res) => {
-        promotions.value = res.data?.map((s) => new Promotion(s)) || []
-      })
-      .catch((err) => {
-        showCommonErrorMessage(err)
-      })
-  })
-  
 </script>
 
 <template>

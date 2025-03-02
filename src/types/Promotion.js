@@ -1,7 +1,7 @@
 import { uuidv7 } from 'uuidv7'
 
 class Promotion {
-    constructor(id, name, description, tenant, type, value, updatedTime, createdTime, createdBy, updatedBy, isDeleted, createdAt, expiredAt, Services) {
+    constructor(id, name, description, tenant, type, value, updatedTime, createdTime, createdBy, updatedBy, isDeleted, createdAt, expiredAt) {
         this.id = id || uuidv7();
         this.name = name || '';
         this.description = description || '';
@@ -15,8 +15,6 @@ class Promotion {
         this.isDeleted = isDeleted || false;
         this.createdAt = createdAt || new Date();
         this.expiredAt = expiredAt || new Date();
-        this.Services = Services || [];
-
     }
 }
 
