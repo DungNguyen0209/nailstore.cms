@@ -113,15 +113,6 @@ const routes = [
   },
   {
     meta: {
-      title: 'Promotion'
-    },
-    path: '/promotion',
-    name: 'promotion',
-    component: () => import('@/views/PromotionView.vue'),
-    meta: { requiresAuth: true }
-  },
-  {
-    meta: {
       title: 'Tables'
     },
     path: '/tables',
