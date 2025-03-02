@@ -15,13 +15,12 @@ export async function createTier({ id, requiredVisit, requiredTotalSpent, color,
     })
 }
 
-export async function updateTier({ id, requiredVisit, requiredTotalSpent, color, name, creditPointSetting, creditPoint }) {
+export async function updateTier({ id, requiredVisit, requiredTotalSpent, color, name, creditPointSetting }) {
     return await api.put('api/tiers/update', {
         id: id,
         requiredVisit: parseInt(requiredVisit),
         requiredSpending: parseFloat(requiredTotalSpent),
         color: color,
-        creditPoint: creditPoint,
         name: name,
         creditPointSetting: {
             requiredPoints: creditPointSetting.requiredPoints,
