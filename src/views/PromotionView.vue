@@ -43,7 +43,6 @@
         showCommonErrorMessage(err)
       })
   })
-  
 </script>
 
 <template>
@@ -56,7 +55,36 @@
         main
       >
       </SectionTitleLineWithButton>
-      <div id="main" class="h-full w-full"></div>
+      <div id="main" class="h-full w-full">
+        <div v-for="promotion in promotions" :key="promotion.id">
+          <Card>
+            <p>{{ promotion.name }}</p>
+            <p>{{ promotion.description }}</p>
+            <div class="flex flex-col gap-2">
+              <IftaLabel>
+                <DatePicker
+                  v-model="promotion.startDate"
+                  inputId="startDate"
+                  showIcon
+                  iconDisplay="input"
+                  variant="filled"
+                />
+                <label for="startDate">Start Date</label>
+              </IftaLabel>
+              <IftaLabel>
+                <DatePicker
+                  v-model="promotion.endDate"
+                  inputId="date"
+                  showIcon
+                  iconDisplay="input"
+                  variant="filled"
+                />
+                <label for="date">To Date</label>
+              </IftaLabel>
+            </div>
+          </Card>
+        </div>
+      </div>
     </SectionMain>
   </LayoutAuthenticated>
 </template>
