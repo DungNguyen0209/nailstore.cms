@@ -38,7 +38,7 @@ services:
       - web-root:/var/www/html
     depends_on:
       - nginx
-    command: certonly --webroot --webroot-path=/var/www/html --email dung.nhm.hcmut@gmail.com --agree-tos --no-eff-email --force-renewal -d nailstore.click  -d www.nailstore.click
+    command: certonly --webroot --webroot-path=/var/www/html --email dung.nhm.hcmut@gmail.com --agree-tos --no-eff-email --force-renewal -d store2.nailstore.click  -d www.store2.nailstore.click
 
 volumes:
   certbot-etc:
